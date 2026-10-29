@@ -1,6 +1,6 @@
 // ==========================================================================
 // MÓDULO DE APUNTES INTELIGENTES Y MAPAS MENTALES CON IA
-// Procesamiento client-side con PDF.js + Detección Dinámica de Modelos Gemini
+// Procesamiento client-side con PDF.js + Google Gemini API
 // Renderizado dual: Marked.js (Markdown) y Mermaid.js (SVG Mindmap)
 // ==========================================================================
 
@@ -12,7 +12,6 @@ class SmartNotesController {
     this.notesHistoryStorageKey = 'estudio_notes_history_v1';
     this.selectedFile = null;
     this.currentResult = null;
-    this.discoveredWorkingModel = null;
 
     this.dom = {
       // Subida de PDF
@@ -203,49 +202,64 @@ class SmartNotesController {
   }
 
   // ========================================================================
-  // PASO 2: Detección Dinámica de Modelos Disponibles en Gemini
+  // PASO 2: Llamada a Gemini con URLs Seguras y Fallback Automático
   // ========================================================================
-  async discoverBestModel() {
-    if (this.discoveredWorkingModel) {
-      return this.discoveredWorkingModel;
-    }
+  async callGeminiApi(requestBody) {
+    // Lista de endpoints en orden prioritario (gemini-1.5-flash y alias activos)
+    const endpoints = [
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`
+    ];
 
-    try {
-      this.setStatus(true, 'Conectando con Gemini...', false);
-      const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`;
-      const response = await fetch(listUrl);
+    let lastError = null;
 
-      if (response.ok) {
-        const data = await response.json();
-        const available = (data.models || []).filter(m => 
-          m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
-        );
+    for (const url of endpoints) {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
 
-        if (available.length > 0) {
-          // Prioridad: gemini-flash-latest, luego flash general (evitando TTS o modelos de imagen pura)
-          const preferred = available.find(m => m.name === 'models/gemini-flash-latest')
-            || available.find(m => m.name.includes('flash') && !m.name.includes('tts') && !m.name.includes('image'))
-            || available.find(m => m.name.includes('gemini'))
-            || available[0];
+        if (response.ok) {
+          return await response.json();
+        }
 
-          if (preferred) {
-            console.log('[Gemini AI] Modelo seleccionado dinámicamente:', preferred.name);
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/${preferred.name}:generateContent?key=${GEMINI_API_KEY}`;
-            this.discoveredWorkingModel = endpoint;
-            return endpoint;
-          }
+        const errData = await response.json().catch(() => ({}));
+        const errMsg = errData.error?.message || `HTTP ${response.status}`;
+        lastError = new Error(errMsg);
+
+        // Si el modelo específico no existe en esa ruta (404 / not found), intentar el siguiente endpoint
+        if (errMsg.toLowerCase().includes('not found') || response.status === 404) {
+          console.warn(`[Gemini AI] Ruta ${url} retornó not found. Reintentando con endpoint alternativo...`);
+          continue;
+        }
+
+        // Si es otro error de la API (ej: cuota, clave inválida), lanzar directamente
+        throw lastError;
+
+      } catch (fetchErr) {
+        lastError = fetchErr;
+
+        // Detectar bloqueo de red o TypeError (Failed to fetch)
+        if (fetchErr.name === 'TypeError' || fetchErr.message.includes('Failed to fetch')) {
+          throw new Error('Bloqueo de red o conexión al intentar contactar con Google Gemini. Por favor verifica que tu dispositivo tenga acceso a internet sin bloqueadores de publicidad o restricciones de firewall activas.');
+        }
+
+        // Si no es not found, no seguir en bucle
+        if (!fetchErr.message.toLowerCase().includes('not found')) {
+          throw fetchErr;
         }
       }
-    } catch (e) {
-      console.warn('[Gemini AI] Error consultando ListModels, usando fallback por defecto:', e);
     }
 
-    // Fallback por defecto si la lista falla
-    return `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+    throw lastError || new Error('No se pudo establecer comunicación con el modelo de IA.');
   }
 
   // ========================================================================
-  // PASO 3: Procesamiento Completo con IA y Fallback
+  // PASO 3: Procesamiento Completo con IA y Recorte Seguro de Payload
   // ========================================================================
   async processDocumentWithAI() {
     this.clearErrors();
@@ -258,13 +272,16 @@ class SmartNotesController {
     try {
       // 1. Extraer texto del documento
       const pdfText = await this.extractTextFromPDF(this.selectedFile);
-      const trimmedText = pdfText.length > 35000 
-        ? pdfText.substring(0, 35000) + '\n...[Texto truncado para análisis]'
-        : pdfText;
 
-      // 2. Descubrir modelo dinámicamente
+      // 2. Recorte de texto seguro y eliminación de caracteres de control
+      const cleanText = pdfText.slice(0, 10000).replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+
+      if (!cleanText.trim()) {
+        throw new Error('El contenido extraído del PDF está vacío tras la limpieza.');
+      }
+
+      // 3. Consulta a Gemini
       this.setStatus(true, 'Generando con IA...', false);
-      const endpoint = await this.discoverBestModel();
 
       const promptInstructions = `
 Actúa como un profesor universitario y sintetizador académico de élite.
@@ -276,7 +293,7 @@ A partir del siguiente texto extraído de un documento de estudio, genera:
 Responde ÚNICAMENTE un objeto JSON válido con las claves "apuntes" y "mapa_mental".
 
 Texto del documento:
-${trimmedText}
+${cleanText}
       `;
 
       const requestBody = {
@@ -287,29 +304,7 @@ ${trimmedText}
         }
       };
 
-      let response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      });
-
-      // Si el modelo seleccionado falla con error, intentar fallback estable v1
-      if (!response.ok) {
-        console.warn('[Gemini AI] Endpoint primario devolvió error, probando endpoint estable v1...');
-        const fallbackEndpoint = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-        response = await fetch(fallbackEndpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody)
-        });
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `Error HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await this.callGeminiApi(requestBody);
       const rawOutput = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawOutput) throw new Error('Respuesta vacía de la API de Gemini.');
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'appestudio-v9';
+const CACHE_NAME = 'appestudio-v11';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -24,7 +24,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Forzando precache v7...');
+      console.log('[Service Worker] Instalando versión v11...');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
@@ -43,7 +43,7 @@ self.addEventListener('activate', (event) => {
         })
       );
     }).then(() => {
-      console.log('[Service Worker] v7 activo y tomando control');
+      console.log('[Service Worker] v11 activo y tomando control');
       return self.clients.claim();
     })
   );
@@ -51,11 +51,9 @@ self.addEventListener('activate', (event) => {
 
 // Intercepción de red
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-
-  // NO interceptar ni cachear la API de Gemini
-  if (event.request.url.includes('generativelanguage.googleapis.com')) {
-    return;
+  // Exclusión explícita: NO interceptar ni cachear llamadas a APIs de Google o métodos no GET
+  if (event.request.url.includes('googleapis.com') || event.request.method !== 'GET') {
+    return; // Permite que la petición vaya directo a la red normal
   }
 
   event.respondWith(
