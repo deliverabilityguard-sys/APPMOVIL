@@ -134,78 +134,76 @@
 
     <!-- 3. VISTA FLASHCARDS -->
     <section id="view-flashcards" class="view-panel">
-      <!-- Selector de Materias / Mazos -->
-      <div id="fc-deck-chips" class="deck-selector">
-        <!-- Rellenado dinámicamente -->
-      </div>
-
-      <div style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0;">
-        <span id="fc-counter" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">1 / 4</span>
-        <button id="btn-open-card-modal" class="btn-primary" style="padding: 6px 14px; font-size: 0.82rem;">
-          + Nueva Tarjeta
-        </button>
-      </div>
-
-      <!-- Tarjeta 3D Volteable -->
-      <div class="flip-card-wrapper">
-        <div id="flashcard-flip" class="flip-card">
-          <!-- Frente -->
-          <div class="flip-face">
-            <div style="display: flex; justify-content: space-between;">
-              <span id="fc-subject-tag" class="card-hint">Materia</span>
-              <span class="card-hint">Toca para voltear 🔄</span>
-            </div>
-            <p id="fc-question" class="card-text">Pregunta</p>
-            <div style="font-size: 0.75rem; color: var(--text-sub); text-align: center;">Toca la tarjeta para ver la respuesta</div>
-          </div>
-          <!-- Dorso -->
-          <div class="flip-face flip-face-back">
-            <div style="display: flex; justify-content: space-between;">
-              <span class="card-hint" style="color: #a78bfa;">Respuesta</span>
-              <span class="card-hint">Toca para voltear 🔄</span>
-            </div>
-            <p id="fc-answer" class="card-text">Respuesta</p>
-            <div style="font-size: 0.75rem; color: #a78bfa; text-align: center;">¿Qué tan difícil fue?</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Calificación de Repaso -->
-      <div class="card-action-bar">
-        <button class="grade-btn hard" data-grade="hard">😓 Difícil</button>
-        <button class="grade-btn good" data-grade="good">🤔 Bien</button>
-        <button class="grade-btn easy" data-grade="easy">⚡ Fácil</button>
-      </div>
-
-      <!-- Card: Generar Flashcards con IA desde PDF -->
-      <div class="glass-card" style="margin-top: 20px;">
+      <!-- 1. Generador de Flashcards desde PDF con IA (Componente Principal Superior) -->
+      <div class="glass-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <h3 style="font-size: 1.05rem; font-weight: 700;">✨ Generar Flashcards desde PDF con IA</h3>
-          <span class="offline-pill" style="font-size: 0.7rem; color: #38bdf8; border-color: rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.1);">⚡ Auto-Baraja</span>
+          <h2 style="font-size: 1.15rem; font-weight: 700;">📑 Flashcards con IA</h2>
+          <span class="offline-pill" style="font-size: 0.72rem; color: #38bdf8; border-color: rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.1);">⚡ Auto-Baraja</span>
         </div>
-        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">
-          Sube tus lecturas o diapositivas en PDF y Gemini creará automáticamente tarjetas de preguntas y respuestas listas para repasar.
-        </p>
 
         <input type="file" id="fc-pdf-file" accept="application/pdf" style="display: none;">
-        <div id="fc-pdf-dropzone" class="pdf-dropzone" style="padding: 22px 16px; margin-bottom: 12px;">
-          <span style="font-size: 2rem; display: block; margin-bottom: 4px;">📑</span>
-          <div style="font-weight: 700; font-size: 0.94rem; color: #f8fafc;">Toca para subir o arrastra tu PDF</div>
-          <div id="fc-file-status" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Hasta 8 páginas procesadas al instante</div>
+        <div id="fc-pdf-dropzone" class="pdf-dropzone" style="padding: 24px 16px; margin-bottom: 12px;">
+          <span style="font-size: 2.2rem; display: block; margin-bottom: 4px;">📥</span>
+          <div style="font-weight: 700; font-size: 0.96rem; color: #f8fafc;">Toca para subir un PDF o arrástralo aquí</div>
+          <div id="fc-file-status" style="font-size: 0.76rem; color: var(--text-muted); margin-top: 3px;">Genera tarjetas de estudio automáticas desde tus lecturas</div>
         </div>
 
-        <button id="btn-generate-fc-ai" class="btn-primary" style="width: 100%; padding: 13px; justify-content: center; font-size: 0.92rem; opacity: 0.6;" disabled>
-          ⚡ Generar Tarjetas con IA
+        <button id="btn-generate-fc-ai" class="btn-primary" style="width: 100%; padding: 14px; justify-content: center; font-size: 0.95rem; opacity: 0.6;" disabled>
+          ⚡ Generar Flashcards con IA
         </button>
 
         <!-- Indicador de Carga -->
-        <div id="fc-ai-status-container" class="status-loading-box" style="display: none; margin-top: 12px; padding: 10px 14px;">
+        <div id="fc-ai-status-container" class="status-loading-box" style="display: none; margin-top: 12px;">
           <div id="fc-ai-status-spinner" class="spinner-dual-ring" style="width: 20px; height: 20px;"></div>
-          <span id="fc-ai-status-text" style="font-size: 0.82rem; font-weight: 600; color: #f8fafc;">Leyendo PDF...</span>
+          <span id="fc-ai-status-text" style="font-size: 0.85rem; font-weight: 600; color: #f8fafc;">Leyendo PDF...</span>
         </div>
 
         <!-- Alerta de error -->
         <div id="fc-ai-error-message" class="error-alert-box" style="margin-top: 10px;"></div>
+      </div>
+
+      <!-- 2. Visor 3D Interactivo de la Baraja (Visible cuando hay tarjetas) -->
+      <div id="fc-viewer-container" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 14px 4px 10px 4px;">
+          <span id="fc-counter" style="font-size: 0.88rem; color: var(--text-secondary); font-weight: 700;">1 / 10</span>
+          <button id="btn-clear-deck" style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.3); color: #fb7185; font-size: 0.78rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+            🗑️ Borrar Baraja
+          </button>
+        </div>
+
+        <!-- Tarjeta 3D Volteable Limpia -->
+        <div class="flip-card-wrapper">
+          <div id="flashcard-flip" class="flip-card">
+            <!-- Frente -->
+            <div class="flip-face">
+              <span id="fc-subject-tag" class="card-hint">Pregunta</span>
+              <p id="fc-question" class="card-text">Pregunta</p>
+              <div style="height: 4px;"></div>
+            </div>
+            <!-- Dorso -->
+            <div class="flip-face flip-face-back">
+              <span class="card-hint" style="color: #a78bfa;">Respuesta</span>
+              <p id="fc-answer" class="card-text">Respuesta</p>
+              <div style="height: 4px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calificación de Repaso -->
+        <div class="card-action-bar">
+          <button class="grade-btn hard" data-grade="hard">😓 Difícil</button>
+          <button class="grade-btn good" data-grade="good">🤔 Bien</button>
+          <button class="grade-btn easy" data-grade="easy">⚡ Fácil</button>
+        </div>
+      </div>
+
+      <!-- 3. Empty State Elegante (Visible cuando la baraja está vacía) -->
+      <div id="fc-empty-state" class="glass-card" style="text-align: center; padding: 36px 20px; margin-top: 10px;">
+        <div style="font-size: 2.8rem; margin-bottom: 10px; filter: drop-shadow(0 4px 14px var(--primary-glow));">🗂️</div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 6px;">Baraja Vacía</h3>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 380px; margin: 0 auto; line-height: 1.4;">
+          Aún no tienes tarjetas. Sube un documento PDF arriba para que la IA genere tu baraja de estudio al instante.
+        </p>
       </div>
     </section>
 
@@ -358,35 +356,6 @@
 
   </main>
 
-  <!-- MODAL: Crear Nueva Flashcard -->
-  <div id="modal-new-card" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>Nueva Tarjeta de Estudio</h3>
-        <button id="btn-close-card-modal" class="modal-close">&times;</button>
-      </div>
-      <form id="form-new-card">
-        <div class="form-group">
-          <label>Materia</label>
-          <select id="new-card-subject" class="input-field" style="width: 100%;">
-            <!-- Dinámico -->
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Pregunta / Concepto (Frente)</label>
-          <textarea id="new-card-q" class="input-field" rows="3" style="width: 100%; resize: vertical;" placeholder="Ej: ¿Qué es el Teorema de Pitágoras?" required></textarea>
-        </div>
-        <div class="form-group">
-          <label>Respuesta / Explicación (Dorso)</label>
-          <textarea id="new-card-a" class="input-field" rows="3" style="width: 100%; resize: vertical;" placeholder="Ej: En un triángulo rectángulo, a² + b² = c²." required></textarea>
-        </div>
-        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; justify-content: center; margin-top: 10px;">
-          Guardar Tarjeta
-        </button>
-      </form>
-    </div>
-  </div>
-
   <!-- Bottom Navigation Bar (Estilo Nativo Mobile) -->
   <nav class="bottom-nav">
     <button class="nav-item active" data-tab="dashboard">
@@ -418,7 +387,7 @@
   <!-- Scripts -->
   <script src="./js/storage.js"></script>
   <script src="./js/pomodoro.js"></script>
-  <script src="./js/flashcards.js?v=12"></script>
+  <script src="./js/flashcards.js?v=16"></script>
   <script src="./js/tasks.js"></script>
   <script src="./js/notes.js?v=11"></script>
   <script src="./js/app.js?v=11"></script>

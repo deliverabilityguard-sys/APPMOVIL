@@ -14,40 +14,7 @@ const DEFAULT_SUBJECTS = [
   { id: 'sub-4', name: 'Historia y Cultura', color: '#ec4899', icon: '🏛️' }
 ];
 
-const DEFAULT_FLASHCARDS = [
-  {
-    id: 'fc-1',
-    subjectId: 'sub-1',
-    question: '¿Qué es un Service Worker en una PWA?',
-    answer: 'Es un script en segundo plano que intercepta peticiones de red y permite que la app funcione sin internet (offline) mediante caché.',
-    difficulty: 'good',
-    reviews: 2
-  },
-  {
-    id: 'fc-2',
-    subjectId: 'sub-1',
-    question: '¿Cuál es la función del archivo manifest.json?',
-    answer: 'Define los metadatos de la PWA (nombre, íconos, color de tema y modo pantalla completa) para que el navegador la instale.',
-    difficulty: 'easy',
-    reviews: 3
-  },
-  {
-    id: 'fc-3',
-    subjectId: 'sub-2',
-    question: 'What does "Spaced Repetition" mean?',
-    answer: 'A learning technique that incorporates increasing intervals of time between subsequent review of previously learned material.',
-    difficulty: 'good',
-    reviews: 1
-  },
-  {
-    id: 'fc-4',
-    subjectId: 'sub-3',
-    question: '¿Qué es una relación de equivalencia?',
-    answer: 'Una relación binaria que cumple con las propiedades reflexiva, simétrica y transitiva.',
-    difficulty: 'hard',
-    reviews: 1
-  }
-];
+const DEFAULT_FLASHCARDS = [];
 
 const DEFAULT_TASKS = [
   {

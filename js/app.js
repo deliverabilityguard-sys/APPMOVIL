@@ -117,7 +117,6 @@ class App {
       this.renderDashboard();
     } else if (tabName === 'flashcards' && window.flashcardsCtrl) {
       window.flashcardsCtrl.loadCards();
-      window.flashcardsCtrl.renderDeckChips();
     } else if (tabName === 'tasks' && window.tasksCtrl) {
       window.tasksCtrl.render();
     } else if (tabName === 'notes' && window.notesCtrl) {
