@@ -4,7 +4,7 @@
 // Renderizado dual: Marked.js (Markdown) y Mermaid.js (SVG Mindmap)
 // ==========================================================================
 
-// 1. Clave API de Gemini fija en el código
+// 1. Clave API fija en el código
 const GEMINI_API_KEY = "AQ" + ".Ab8RN6K96o_9-AjlAR7ZIpZCHgpvXVPw8QYqUqU0YIfE-Q4Ayg";
 
 class SmartNotesController {
@@ -202,64 +202,7 @@ class SmartNotesController {
   }
 
   // ========================================================================
-  // PASO 2: Llamada a Gemini con URLs Seguras y Fallback Automático
-  // ========================================================================
-  async callGeminiApi(requestBody) {
-    // Lista de endpoints en orden prioritario (gemini-1.5-flash y alias activos)
-    const endpoints = [
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`
-    ];
-
-    let lastError = null;
-
-    for (const url of endpoints) {
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          mode: 'cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody)
-        });
-
-        if (response.ok) {
-          return await response.json();
-        }
-
-        const errData = await response.json().catch(() => ({}));
-        const errMsg = errData.error?.message || `HTTP ${response.status}`;
-        lastError = new Error(errMsg);
-
-        // Si el modelo específico no existe en esa ruta (404 / not found), intentar el siguiente endpoint
-        if (errMsg.toLowerCase().includes('not found') || response.status === 404) {
-          console.warn(`[Gemini AI] Ruta ${url} retornó not found. Reintentando con endpoint alternativo...`);
-          continue;
-        }
-
-        // Si es otro error de la API (ej: cuota, clave inválida), lanzar directamente
-        throw lastError;
-
-      } catch (fetchErr) {
-        lastError = fetchErr;
-
-        // Detectar bloqueo de red o TypeError (Failed to fetch)
-        if (fetchErr.name === 'TypeError' || fetchErr.message.includes('Failed to fetch')) {
-          throw new Error('Bloqueo de red o conexión al intentar contactar con Google Gemini. Por favor verifica que tu dispositivo tenga acceso a internet sin bloqueadores de publicidad o restricciones de firewall activas.');
-        }
-
-        // Si no es not found, no seguir en bucle
-        if (!fetchErr.message.toLowerCase().includes('not found')) {
-          throw fetchErr;
-        }
-      }
-    }
-
-    throw lastError || new Error('No se pudo establecer comunicación con el modelo de IA.');
-  }
-
-  // ========================================================================
-  // PASO 3: Procesamiento Completo con IA y Recorte Seguro de Payload
+  // PASO 2: Procesamiento con Gemini (Control de Payload, CORS y Fallback)
   // ========================================================================
   async processDocumentWithAI() {
     this.clearErrors();
@@ -273,14 +216,14 @@ class SmartNotesController {
       // 1. Extraer texto del documento
       const pdfText = await this.extractTextFromPDF(this.selectedFile);
 
-      // 2. Recorte de texto seguro y eliminación de caracteres de control
+      // 2. Limpieza y recorte seguro a 10,000 caracteres
       const cleanText = pdfText.slice(0, 10000).replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 
       if (!cleanText.trim()) {
         throw new Error('El contenido extraído del PDF está vacío tras la limpieza.');
       }
 
-      // 3. Consulta a Gemini
+      // 3. Indicador de carga activo
       this.setStatus(true, 'Generando con IA...', false);
 
       const promptInstructions = `
@@ -296,15 +239,47 @@ Texto del documento:
 ${cleanText}
       `;
 
-      const requestBody = {
+      const requestPayload = {
         contents: [{ parts: [{ text: promptInstructions }] }],
         generationConfig: {
-          response_mime_type: "application/json",
+          responseMimeType: "application/json",
           temperature: 0.3
         }
       };
 
-      const data = await this.callGeminiApi(requestBody);
+      // 4. Petición directa a Gemini
+      const primaryUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+
+      let response;
+      try {
+        response = await fetch(primaryUrl, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestPayload)
+        });
+
+        // Si gemini-1.5-flash responde 404, reintentar con el alias activo gemini-flash-latest
+        if (!response.ok && response.status === 404) {
+          console.warn('[Gemini AI] Reintentando con gemini-flash-latest...');
+          response = await fetch(fallbackUrl, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestPayload)
+          });
+        }
+      } catch (fetchNetworkErr) {
+        throw new Error('No se pudo conectar con el servicio de IA de Google (Failed to fetch). Verifica tu conexión a internet o intenta nuevamente.');
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `Error HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
       const rawOutput = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawOutput) throw new Error('Respuesta vacía de la API de Gemini.');
 
@@ -327,11 +302,16 @@ ${cleanText}
       console.error(err);
       this.setStatus(false, '', false);
       this.showError(err.message || 'Error al procesar el documento con IA.');
+    } finally {
+      // Deshabilitar spinner en el bloque finally garantizado
+      if (this.dom.statusSpinner) {
+        this.dom.statusSpinner.style.display = 'none';
+      }
     }
   }
 
   // ========================================================================
-  // PASO 4: Renderizado Dual (Marked.js y Mermaid.js)
+  // PASO 3: Renderizado Dual (Marked.js y Mermaid.js)
   // ========================================================================
   async renderOutput(result) {
     if (!this.dom.resultsContainer) return;
