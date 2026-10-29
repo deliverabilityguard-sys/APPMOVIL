@@ -1,13 +1,29 @@
 {
-  "name": "app-estudio-emile",
+  "name": "supervivencia-estudiantil",
   "version": "1.0.0",
-  "description": "Progressive Web App (PWA) de estudio con Pomodoro, Flashcards, Tareas y soporte 100% Offline.",
+  "description": "Supervivencia Estudiantil — Finanzas & Cocina Foránea (Capacitor Android & PWA)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build": "node scripts/prepare-www.js",
+    "cap:sync": "npm run build && npx cap sync android",
+    "cap:open": "npx cap open android",
+    "cap:run": "npm run build && npx cap run android"
   },
-  "keywords": ["pwa", "study", "pomodoro", "flashcards", "offline-first"],
+  "keywords": [
+    "pwa",
+    "capacitor",
+    "android",
+    "finanzas",
+    "cocina",
+    "offline-first"
+  ],
   "author": "Emile",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0"
+  }
 }
