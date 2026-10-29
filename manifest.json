@@ -1,12 +1,12 @@
 {
-  "name": "App de Estudio Emile",
-  "short_name": "Estudio",
-  "description": "Tu asistente inteligente de estudio: Pomodoro, Flashcards, Tareas y Resúmenes 100% offline.",
+  "name": "Supervivencia Estudiantil — Finanzas & Cocina Foránea",
+  "short_name": "Supervivencia",
+  "description": "Tu kit de supervivencia universitaria: presupuesto diario, recetas con lo que hay en la despensa, hacks de ahorro y control de pagos.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#4f46e5",
+  "background_color": "#0B0D13",
+  "theme_color": "#000000",
   "orientation": "portrait-primary",
   "lang": "es",
   "dir": "ltr",
@@ -32,24 +32,31 @@
   ],
   "shortcuts": [
     {
-      "name": "Pomodoro Timer",
-      "short_name": "Pomodoro",
-      "description": "Iniciar sesión de concentración",
-      "url": "./index.html#pomodoro",
+      "name": "Mi Plata",
+      "short_name": "Plata",
+      "description": "Control de gastos y presupuesto de hoy",
+      "url": "./index.html#budget",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Tarjetas Flashcards",
-      "short_name": "Tarjetas",
-      "description": "Repasar tarjetas de estudio",
-      "url": "./index.html#flashcards",
+      "name": "Chef Foráneo",
+      "short_name": "Chef",
+      "description": "Recetas con lo que hay en la despensa",
+      "url": "./index.html#chef",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Tareas y Exámenes",
-      "short_name": "Tareas",
-      "description": "Ver tareas pendientes",
-      "url": "./index.html#tasks",
+      "name": "Hacks de Vida",
+      "short_name": "Hacks",
+      "description": "Trucos de ahorro para foráneos",
+      "url": "./index.html#hacks",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Pagos al Día",
+      "short_name": "Pagos",
+      "description": "Control de arriendo y recibos",
+      "url": "./index.html#bills",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     }
   ]

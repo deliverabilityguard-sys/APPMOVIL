@@ -1,8 +1,11 @@
-// Controlador Principal de la Aplicación y Soporte PWA
+// ==========================================================================
+// CONTROLADOR PRINCIPAL — SUPERVIVENCIA ESTUDIANTIL (PWA)
+// ==========================================================================
+
 class App {
   constructor() {
     this.deferredPrompt = null;
-    this.currentTab = 'dashboard';
+    this.currentTab = 'budget';
     this.init();
   }
 
@@ -10,22 +13,21 @@ class App {
     this.setupPWA();
     this.setupLandingPage();
     this.setupNavigation();
-    this.renderDashboard();
-    this.setupSettingsView();
 
-    // Sincronizar controladores al cambiar el almacenamiento
+    // Sincronizar controladores al cambiar de ventana o storage
     window.addEventListener('storage', () => {
-      this.renderDashboard();
+      if (window.budgetManager) window.budgetManager.render();
+      if (window.billsManager) window.billsManager.render();
     });
 
-    // Leer hash inicial si existe (#pomodoro, #flashcards, #tasks, #notes)
+    // Leer hash inicial si existe
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['dashboard', 'pomodoro', 'flashcards', 'tasks', 'notes', 'settings'].includes(hash)) {
+    if (hash && ['budget', 'chef', 'hacks', 'bills'].includes(hash)) {
       this.switchTab(hash);
     }
   }
 
-  // Control de la Landing Page / Instalador para visitantes desde navegador
+  // Detección de Modo de Ejecución: PWA Instalada (Standalone) vs Navegador Web
   setupLandingPage() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     const overlay = document.getElementById('landing-install-overlay');
@@ -56,7 +58,7 @@ class App {
         if (this.deferredPrompt) {
           this.deferredPrompt.prompt();
           const { outcome } = await this.deferredPrompt.userChoice;
-          console.log(`[PWA] Respuesta instalación desde Landing: ${outcome}`);
+          console.log(`[PWA] Respuesta instalación: ${outcome}`);
           if (outcome === 'accepted') {
             this.deferredPrompt = null;
             this.hideLandingOverlay();
@@ -96,15 +98,14 @@ class App {
 
   // Configuración del Service Worker y Prompt de Instalación PWA
   setupPWA() {
-    const installBtn = document.getElementById('btn-install-pwa');
+    const installBtn = document.getElementById('btn-header-install');
 
-    // Registro del Service Worker con auto-recarga al actualizar
     if ('serviceWorker' in navigator) {
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!refreshing) {
           refreshing = true;
-          console.log('[PWA] Nueva versión activada. Recargando página...');
+          console.log('[PWA] Nueva versión activada. Recargando aplicación...');
           window.location.reload();
         }
       });
@@ -112,7 +113,7 @@ class App {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
           .then((registration) => {
-            console.log('[PWA] Service Worker registrado exitosamente en el scope:', registration.scope);
+            console.log('[PWA] Service Worker registrado exitosamente:', registration.scope);
             registration.update();
           })
           .catch((error) => {
@@ -121,50 +122,51 @@ class App {
       });
     }
 
-    // Captura del evento de instalación nativo del navegador
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.deferredPrompt = e;
       if (installBtn) {
-        installBtn.classList.add('visible');
+        installBtn.style.display = 'inline-flex';
       }
-      console.log('[PWA] Aplicación lista para instalar');
+      console.log('[PWA] Evento beforeinstallprompt capturado');
     });
 
     if (installBtn) {
       installBtn.addEventListener('click', async () => {
-        if (!this.deferredPrompt) {
-          alert('Para instalar esta app:\n• En Chrome móvil: Abre el menú ⋮ y selecciona "Instalar app" o "Agregar a pantalla principal".\n• En Safari (iOS): Toca Compartir y "Agregar al inicio".');
-          return;
+        if (this.deferredPrompt) {
+          this.deferredPrompt.prompt();
+          const { outcome } = await this.deferredPrompt.userChoice;
+          console.log(`[PWA] Respuesta instalación: ${outcome}`);
+          this.deferredPrompt = null;
+          installBtn.style.display = 'none';
+        } else {
+          alert('Para instalar esta app en tu pantalla de inicio:\n• En Safari (iPhone): Toca Compartir ⎋ y selecciona "Agregar a Inicio ➕".\n• En Chrome (Android): Toca ⋮ y selecciona "Instalar aplicación".');
         }
-        this.deferredPrompt.prompt();
-        const { outcome } = await this.deferredPrompt.userChoice;
-        console.log(`[PWA] Respuesta de instalación: ${outcome}`);
-        this.deferredPrompt = null;
-        installBtn.classList.remove('visible');
       });
     }
 
     window.addEventListener('appinstalled', () => {
-      console.log('[PWA] App de Estudio instalada exitosamente');
-      if (installBtn) installBtn.classList.remove('visible');
+      console.log('[PWA] App instalada con éxito');
+      if (installBtn) installBtn.style.display = 'none';
       this.hideLandingOverlay();
     });
 
-    // Detectar si ya se está ejecutando como PWA instalada (standalone)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     if (isStandalone && installBtn) {
       installBtn.style.display = 'none';
     }
   }
 
-  // Navegación por pestañas (Mobile App Tabs)
+  // Navegación fija inferior (Bottom Nav) con 4 pestañas
   setupNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(btn => {
       btn.addEventListener('click', (e) => {
         const tab = e.currentTarget.dataset.tab;
-        this.switchTab(tab);
+        if (tab) {
+          this.switchTab(tab);
+          if ('vibrate' in navigator) navigator.vibrate(15);
+        }
       });
     });
   }
@@ -183,143 +185,18 @@ class App {
       panel.classList.toggle('active', panel.id === `view-${tabName}`);
     });
 
-    // Refrescar vistas específicas
-    if (tabName === 'dashboard') {
-      this.renderDashboard();
-    } else if (tabName === 'flashcards' && window.flashcardsCtrl) {
-      window.flashcardsCtrl.loadCards();
-    } else if (tabName === 'tasks' && window.tasksCtrl) {
-      window.tasksCtrl.render();
-    } else if (tabName === 'notes' && window.notesCtrl) {
-      window.notesCtrl.renderHistory();
-    }
-  }
-
-  // Actualizar estadísticas del Dashboard
-  renderDashboard() {
-    const stats = window.appStorage.getTodayStats();
-    
-    const minutesEl = document.getElementById('stat-minutes');
-    const pomodorosEl = document.getElementById('stat-pomodoros');
-    const tasksEl = document.getElementById('stat-tasks');
-    const cardsEl = document.getElementById('stat-cards');
-
-    if (minutesEl) minutesEl.textContent = stats.minutesStudied;
-    if (pomodorosEl) pomodorosEl.textContent = stats.pomodorosCount;
-    if (tasksEl) tasksEl.textContent = stats.tasksCompleted;
-    if (cardsEl) cardsEl.textContent = stats.cardsReviewed;
-
-    // Resumen rápido de tareas pendientes
-    const recentTasksList = document.getElementById('dashboard-pending-tasks');
-    if (recentTasksList) {
-      const pendingTasks = window.appStorage.getTasks().filter(t => !t.completed).slice(0, 4);
-      if (pendingTasks.length === 0) {
-        recentTasksList.innerHTML = `<p style="color: var(--text-sub); font-size: 0.9rem; margin-top: 8px;">¡Todo al día! No tienes tareas pendientes. 🚀</p>`;
-      } else {
-        recentTasksList.innerHTML = pendingTasks.map(t => `
-          <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
-            <span style="font-size: 0.92rem;">${t.title}</span>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">${t.dueDate || 'Hoy'}</span>
-          </div>
-        `).join('');
-      }
+    // Refrescar vistas al cambiar
+    if (tabName === 'budget' && window.budgetManager) {
+      window.budgetManager.render();
+    } else if (tabName === 'bills' && window.billsManager) {
+      window.billsManager.render();
     }
 
-    // Clases y pendientes de hoy (Widget Calendario)
-    if (window.calendarManager) {
-      window.calendarManager.renderDashboardTodayEvents();
-    }
-  }
-
-  // Ajustes y gestión de materias
-  setupSettingsView() {
-    const exportBtn = document.getElementById('btn-export-data');
-    const importInput = document.getElementById('input-import-data');
-    const subjectsContainer = document.getElementById('settings-subjects-list');
-    const formAddSubject = document.getElementById('form-add-subject');
-
-    const renderSubjects = () => {
-      if (!subjectsContainer) return;
-      const subjects = window.appStorage.getSubjects();
-      subjectsContainer.innerHTML = subjects.map(s => `
-        <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface); padding: 10px 14px; border-radius: var(--radius-md); margin-bottom: 8px; border: 1px solid var(--border-color);">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 1.3rem;">${s.icon}</span>
-            <span style="font-weight: 600;">${s.name}</span>
-          </div>
-          <button style="background: transparent; border: none; color: var(--accent-danger); cursor: pointer;" data-del-subject="${s.id}">✕</button>
-        </div>
-      `).join('');
-
-      subjectsContainer.querySelectorAll('[data-del-subject]').forEach(b => {
-        b.addEventListener('click', (e) => {
-          const id = e.currentTarget.dataset.delSubject;
-          window.appStorage.deleteSubject(id);
-          renderSubjects();
-          if (window.pomodoroTimer) window.pomodoroTimer.populateSubjects();
-          if (window.flashcardsCtrl) window.flashcardsCtrl.renderDeckChips();
-          if (window.tasksCtrl) window.tasksCtrl.populateSubjects();
-        });
-      });
-    };
-
-    renderSubjects();
-
-    if (formAddSubject) {
-      formAddSubject.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = document.getElementById('new-sub-name').value.trim();
-        const icon = document.getElementById('new-sub-icon').value.trim() || '📚';
-        if (name) {
-          window.appStorage.addSubject(name, '#6366f1', icon);
-          document.getElementById('new-sub-name').value = '';
-          renderSubjects();
-          if (window.pomodoroTimer) window.pomodoroTimer.populateSubjects();
-          if (window.flashcardsCtrl) window.flashcardsCtrl.renderDeckChips();
-          if (window.tasksCtrl) window.tasksCtrl.populateSubjects();
-        }
-      });
-    }
-
-    if (exportBtn) {
-      exportBtn.addEventListener('click', () => {
-        const json = window.appStorage.exportJSON();
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `respaldo-estudio-${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      });
-    }
-
-    if (importInput) {
-      importInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const success = window.appStorage.importJSON(event.target.result);
-            if (success) {
-              alert('✅ Datos importados correctamente.');
-              window.location.reload();
-            } else {
-              alert('❌ El archivo seleccionado no contiene un formato de respaldo válido.');
-            }
-          };
-          reader.readAsText(file);
-        }
-      });
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
 
-// Inicialización de la App cuando el DOM esté listo
+// Inicialización de la aplicación
 document.addEventListener('DOMContentLoaded', () => {
   window.appInstance = new App();
-  window.pomodoroTimer = new PomodoroTimer();
-  window.flashcardsCtrl = new FlashcardsController();
-  window.tasksCtrl = new TasksController();
-  window.notesCtrl = new SmartNotesController();
 });

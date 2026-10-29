@@ -1,23 +1,17 @@
-const CACHE_NAME = 'appestudio-v22';
+const CACHE_NAME = 'supervivencia-v26';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   './css/styles.css',
-  './js/storage.js',
-  './js/pomodoro.js',
-  './js/flashcards.js',
-  './js/tasks.js',
-  './js/calendar.js',
-  './js/notes.js',
+  './js/budget.js',
+  './js/chef.js',
+  './js/hacks.js',
+  './js/bills.js',
   './js/app.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/icon.svg',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
-  'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
-  'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js'
+  './icons/icon.svg'
 ];
 
 // Instalación inmediata (skipWaiting forzado)
@@ -25,7 +19,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Instalando versión v22...');
+      console.log('[Service Worker] Instalando versión supervivencia-v26...');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
@@ -44,7 +38,7 @@ self.addEventListener('activate', (event) => {
         })
       );
     }).then(() => {
-      console.log('[Service Worker] v22 activo y tomando control');
+      console.log('[Service Worker] supervivencia-v26 activo y tomando control');
       return self.clients.claim();
     })
   );

@@ -3,25 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>App de Estudio Emile - PWA</title>
+  <title>Supervivencia Estudiantil — Finanzas & Cocina Foránea</title>
 
   <!-- PWA Meta Tags -->
   <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#0b0f19">
+  <meta name="theme-color" content="#000000">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Estudio">
+  <meta name="apple-mobile-web-app-title" content="Supervivencia">
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
 
-  <!-- Estilos principales -->
-  <link rel="stylesheet" href="./css/styles.css">
-
-  <!-- CDNs para Apuntes Inteligentes con IA (PDF.js, Marked.js, Mermaid.js) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <!-- Estilos Principales (Figma Dark Glassmorphism & Neon Green) -->
+  <link rel="stylesheet" href="./css/styles.css?v=26">
 
   <!-- Detección Inmediata de Modo PWA Instalada vs Navegador -->
   <script>
@@ -35,529 +30,531 @@
 </head>
 <body>
 
-  <!-- Pantalla de Bienvenida / Instalador PWA (Landing Page para Navegador Web) -->
+  <!-- ========================================================================
+       LANDING PAGE / INSTALADOR PWA (MODO NAVEGADOR WEB)
+       ======================================================================== -->
   <div id="landing-install-overlay" class="landing-overlay">
     <div class="landing-container">
       <div class="landing-badge">
-        <span>⚡</span> PWA Móvil & Offline
+        <span>⚡</span> PWA Foránea & Offline
       </div>
       
-      <div class="landing-hero">
-        <img src="./icons/icon.svg" alt="App de Estudio Emile" class="landing-logo">
-        <h1 class="landing-title">App de Estudio Emile</h1>
-        <p class="landing-subtitle">
-          Tu compañero universitario de estudio inteligente: resúmenes con IA, mapas mentales, flashcards, calendario y método Pomodoro 100% offline.
-        </p>
-      </div>
+      <img src="./icons/icon.svg" alt="Supervivencia Estudiantil" class="landing-logo">
+      <h1 class="landing-title">Supervivencia Estudiantil</h1>
+      <p class="landing-subtitle">
+        Finanzas diarias, recetas inteligentes con lo que hay en tu despensa, hacks de ahorro y control de arriendos.
+      </p>
 
-      <!-- Beneficios Principales -->
-      <div class="landing-features-grid">
-        <div class="landing-feature-card">
-          <span class="landing-feature-icon">🧠</span>
-          <div>
-            <strong>Apuntes & Mapas Mentales con IA</strong>
-            <p>Convierte PDFs en resúmenes ejecutivos y diagramas Mermaid en segundos.</p>
-          </div>
+      <div class="landing-features-list">
+        <div class="landing-feature-row">
+          <span>💰</span> Control de plata diaria y gastos en 1 toque
         </div>
-        <div class="landing-feature-card">
-          <span class="landing-feature-icon">🗂️</span>
-          <div>
-            <strong>Tarjetas Flashcards Mnemotécnicas</strong>
-            <p>Generación de tarjetas de estudio desde PDF con animación de giro 3D.</p>
-          </div>
+        <div class="landing-feature-row">
+          <span>🍳</span> Chef Foráneo: Recetas con IA con tus ingredientes
         </div>
-        <div class="landing-feature-card">
-          <span class="landing-feature-icon">📅</span>
-          <div>
-            <strong>Clases y Pendientes del Día</strong>
-            <p>Organiza materias, entregas, exámenes y recordatorios en tu inicio.</p>
-          </div>
+        <div class="landing-feature-row">
+          <span>💡</span> Hacks de ahorro para no llegar en ceros a fin de mes
         </div>
-        <div class="landing-feature-card">
-          <span class="landing-feature-icon">⏱️</span>
-          <div>
-            <strong>Pomodoro & Enfoque 100% Offline</strong>
-            <p>Tus datos se quedan en tu dispositivo; estudia sin gastar tu plan de datos.</p>
-          </div>
+        <div class="landing-feature-row">
+          <span>📅</span> Recordatorio de arriendo y recibos sin olvidar fechas
         </div>
       </div>
 
-      <!-- Acciones de Instalación y Acceso -->
-      <div class="landing-actions">
-        <button id="btn-landing-install" class="btn-primary btn-landing-install">
-          <span>📲</span> Instalar Aplicación
+      <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; margin-bottom: 14px;">
+        <button id="btn-landing-install" class="btn-primary-neon" style="font-size: 1rem; padding: 15px;">
+          <span>📲</span> Instalar Aplicación Móvil
         </button>
-        <button id="btn-landing-skip" class="btn-landing-skip">
+        <button id="btn-landing-skip" style="background: transparent; border: 1px solid var(--border-card); color: var(--text-muted); padding: 11px; border-radius: var(--radius-md); font-size: 0.86rem; font-weight: 600; cursor: pointer;">
           Probar en la web sin instalar →
         </button>
       </div>
 
-      <!-- Instrucciones para navegadores sin prompt automático (Safari iOS / Escritorio) -->
-      <div id="landing-install-guide" class="landing-guide-box" style="display: none;">
-        <div style="font-size: 0.84rem; font-weight: 700; color: #38bdf8; margin-bottom: 6px;">
-          💡 Pasos para instalar en tu pantalla de inicio:
+      <!-- Guía de instalación para navegadores sin prompt automático (Safari iOS / Desktop) -->
+      <div id="landing-install-guide" style="display: none; background: #12151e; border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 12px; text-align: left; margin-bottom: 14px;">
+        <div style="font-size: 0.82rem; font-weight: 700; color: var(--primary); margin-bottom: 6px;">
+          💡 Pasos para agregar al inicio:
         </div>
-        <ul style="font-size: 0.78rem; color: var(--text-secondary); margin: 0; padding-left: 18px; line-height: 1.5;">
-          <li><strong>En iPhone / iPad (Safari):</strong> Toca el botón <em>Compartir</em> (ícono cuadrado con flecha hacia arriba ⎋) y pulsa en <em>"Agregar a la pantalla principal" ➕</em>.</li>
-          <li><strong>En Android (Chrome / Edge):</strong> Toca los tres puntos (⋮) arriba a la derecha y selecciona <em>"Instalar app"</em> o <em>"Agregar a la pantalla principal"</em>.</li>
-          <li><strong>En Computadora:</strong> Haz clic en el ícono de instalación en la barra de direcciones del navegador.</li>
+        <ul style="font-size: 0.76rem; color: var(--text-muted); margin: 0; padding-left: 18px; line-height: 1.5;">
+          <li><strong>En iPhone (Safari):</strong> Toca <em>Compartir ⎋</em> y pulsa <em>"Agregar a la pantalla principal" ➕</em>.</li>
+          <li><strong>En Android (Chrome):</strong> Toca los tres puntos (⋮) y selecciona <em>"Instalar aplicación"</em>.</li>
         </ul>
       </div>
 
-      <div class="landing-footer">
-        <span>🔒 100% Privado • Funciona sin conexión a internet</span>
+      <div style="font-size: 0.72rem; color: var(--text-subtle);">
+        🔒 100% Privado • Tus datos se quedan en tu dispositivo
       </div>
     </div>
   </div>
 
-  <!-- Header Superior -->
+  <!-- ========================================================================
+       HEADER SUPERIOR FIJO
+       ======================================================================== -->
   <header class="app-header">
     <div class="brand-wrapper">
-      <img src="./icons/icon.svg" alt="Logo Estudio" class="brand-icon">
-      <h1 class="brand-title">Estudio PWA</h1>
+      <img src="./icons/icon.svg" alt="Logo" class="brand-icon">
+      <div class="brand-info">
+        <h1>Hola, Emile 👋</h1>
+        <p>Tu presupuesto al día</p>
+      </div>
     </div>
     <div class="header-actions">
-      <span class="offline-pill">● 100% Offline</span>
-      <button id="btn-install-pwa" class="install-btn">📲 Instalar App</button>
+      <button id="btn-open-set-budget" class="btn-header-action" title="Ajustar Presupuesto">
+        <span>$</span> Presupuesto
+      </button>
+      <button id="btn-header-install" class="btn-header-action" style="display: none; color: #fff; background: var(--primary-dark); border-color: var(--primary);">
+        📲 Instalar
+      </button>
     </div>
   </header>
 
-  <!-- Contenido Principal -->
+  <!-- ========================================================================
+       CONTENIDO PRINCIPAL — 4 PANTALLAS FIGMA
+       ======================================================================== -->
   <main class="app-content">
 
-    <!-- 1. VISTA DASHBOARD / INICIO -->
-    <section id="view-dashboard" class="view-panel active">
-      <!-- Banner de Racha -->
-      <div class="glass-card streak-banner">
-        <div class="streak-info">
-          <h3>¡Enfoque Total!</h3>
-          <p>Tu progreso de estudio sincronizado localmente</p>
+    <!-- --------------------------------------------------------------------
+         PANTALLA 1: "MI PLATA" (DASHBOARD FINANCIERO DIARIO)
+         -------------------------------------------------------------------- -->
+    <section id="view-budget" class="view-panel active">
+      <!-- Hero Card: Disponible para hoy -->
+      <div class="hero-budget-card">
+        <div class="hero-budget-label">DISPONIBLE PARA HOY</div>
+        <div id="budget-available-amount" class="hero-budget-amount">$14.500</div>
+        <div>
+          <span id="budget-level-badge" class="hero-budget-badge">✨ Nivel: Bajo control</span>
         </div>
-        <div class="streak-badge">
-          <span>🔥</span>
-          <span>4</span>
-          <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">días</span>
+
+        <!-- Barra de progreso de gasto -->
+        <div class="budget-progress-wrap">
+          <div id="budget-progress-bar" class="budget-progress-bar" style="width: 29%;"></div>
+        </div>
+
+        <div class="budget-stats-row">
+          <span>Presupuesto base: <strong id="budget-initial-stat">$20.500</strong></span>
+          <span>Gastado hoy: <strong id="budget-spent-stat" style="color: var(--accent-danger);">-$6.000</strong></span>
         </div>
       </div>
 
-      <!-- Cuadrícula de Métricas -->
-      <div class="stats-grid">
-        <div class="stat-item">
-          <div id="stat-minutes" class="stat-value">0</div>
-          <div class="stat-label">Minutos Hoy</div>
+      <!-- Sección Gasto Rápido (Un toque y listo) -->
+      <div class="glass-card">
+        <div class="section-title-wrap">
+          <h2 class="section-title">
+            <span>⚡</span> Gasto Rápido
+          </h2>
+          <span class="section-subtitle">Un toque y listo</span>
         </div>
-        <div class="stat-item">
-          <div id="stat-pomodoros" class="stat-value">0</div>
-          <div class="stat-label">Pomodoros</div>
-        </div>
-        <div class="stat-item">
-          <div id="stat-tasks" class="stat-value">0</div>
-          <div class="stat-label">Tareas Listas</div>
-        </div>
-      </div>
 
-      <!-- Widget: 📅 Clases y Pendientes de Hoy -->
-      <div class="glass-card" id="dashboard-today-events-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-          <div>
-            <h2 style="font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-              <span>📅</span> Clases y Pendientes de Hoy
-            </h2>
-            <span id="dashboard-today-date-badge" style="font-size: 0.76rem; color: var(--text-muted); font-weight: 600;"></span>
-          </div>
-          <button id="btn-dashboard-add-event" class="btn-primary" style="padding: 6px 12px; font-size: 0.78rem;">
-            + Programar
+        <div class="quick-spend-grid">
+          <!-- 1. Transporte -->
+          <button class="quick-spend-btn" data-title="Transporte bus" data-amount="3000" data-icon="🚌">
+            <span class="quick-spend-icon">🚌</span>
+            <div class="quick-spend-info">
+              <div class="quick-spend-name">Transporte</div>
+              <div class="quick-spend-val">$3.000</div>
+            </div>
+          </button>
+
+          <!-- 2. Almuerzo -->
+          <button class="quick-spend-btn" data-title="Almuerzo universitario" data-amount="8500" data-icon="🍛">
+            <span class="quick-spend-icon">🍛</span>
+            <div class="quick-spend-info">
+              <div class="quick-spend-name">Almuerzo</div>
+              <div class="quick-spend-val">$8.500</div>
+            </div>
+          </button>
+
+          <!-- 3. Fotocopias -->
+          <button class="quick-spend-btn" data-title="Fotocopias/Lecturas" data-amount="1200" data-icon="📄">
+            <span class="quick-spend-icon">📄</span>
+            <div class="quick-spend-info">
+              <div class="quick-spend-name">Fotocopias</div>
+              <div class="quick-spend-val">$1.200</div>
+            </div>
+          </button>
+
+          <!-- 4. Tinto/Snack -->
+          <button class="quick-spend-btn" data-title="Tinto / Snack" data-amount="2000" data-icon="☕">
+            <span class="quick-spend-icon">☕</span>
+            <div class="quick-spend-info">
+              <div class="quick-spend-name">Tinto/Snack</div>
+              <div class="quick-spend-val">$2.000</div>
+            </div>
           </button>
         </div>
 
-        <!-- Lista de actividades del día -->
-        <div id="dashboard-today-events-list">
-          <!-- Renderizado dinámicamente -->
-        </div>
-      </div>
-
-      <!-- Acceso Rápido a Tareas -->
-      <div class="glass-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h2 style="font-size: 1.1rem; font-weight: 700;">Próximas Tareas</h2>
-          <span id="stat-cards" style="font-size: 0.8rem; color: var(--primary); font-weight: 600;">Repasos listos</span>
-        </div>
-        <div id="dashboard-pending-tasks">
-          <!-- Renderizado dinámicamente -->
-        </div>
-      </div>
-
-      <!-- Tarjeta explicativa PWA -->
-      <div class="glass-card" style="border-left: 4px solid var(--primary);">
-        <h3 style="font-size: 0.95rem; margin-bottom: 6px;">📱 Modo App Instalable</h3>
-        <p style="font-size: 0.83rem; color: var(--text-muted); line-height: 1.4;">
-          Esta aplicación funciona completamente sin internet gracias a su Service Worker integrado. Puedes agregarla a tu pantalla de inicio en Android o iOS para usarla como una aplicación nativa.
-        </p>
-      </div>
-    </section>
-
-    <!-- 2. VISTA POMODORO -->
-    <section id="view-pomodoro" class="view-panel">
-      <div class="glass-card pomodoro-card">
-        <!-- Selector de Modos -->
-        <div class="timer-modes">
-          <button class="timer-mode-btn active" data-mode="focus">Concentración</button>
-          <button class="timer-mode-btn" data-mode="shortBreak">Descanso Corto</button>
-          <button class="timer-mode-btn" data-mode="longBreak">Descanso Largo</button>
-        </div>
-
-        <!-- Reloj Circular -->
-        <div class="timer-circle-wrap">
-          <svg class="timer-svg" viewBox="0 0 250 250">
-            <defs>
-              <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#6366f1" />
-                <stop offset="100%" stop-color="#d946ef" />
-              </linearGradient>
-            </defs>
-            <circle class="timer-bg-ring" cx="125" cy="125" r="110" />
-            <circle id="timer-progress" class="timer-progress-ring" cx="125" cy="125" r="110" />
-          </svg>
-          <div class="timer-inner-content">
-            <div id="timer-time" class="timer-display">25:00</div>
-            <div class="timer-subject-pill">
-              <select id="timer-subject-select" style="background: transparent; border: none; color: #fff; font-weight: 600; cursor: pointer; outline: none;">
-                <!-- Dinámico -->
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Botones de Control -->
-        <div class="timer-controls">
-          <button id="btn-timer-reset" class="btn-icon-round" title="Reiniciar">↺</button>
-          <button id="btn-timer-play" class="btn-play-hero" title="Iniciar">▶</button>
-          <button id="btn-timer-skip" class="btn-icon-round" title="Siguiente">⏭</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3. VISTA FLASHCARDS -->
-    <section id="view-flashcards" class="view-panel">
-      <!-- 1. Generador de Flashcards desde PDF con IA (Componente Principal Superior) -->
-      <div class="glass-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <h2 style="font-size: 1.15rem; font-weight: 700;">📑 Flashcards con IA</h2>
-          <span class="offline-pill" style="font-size: 0.72rem; color: #38bdf8; border-color: rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.1);">⚡ Auto-Baraja</span>
-        </div>
-
-        <input type="file" id="fc-pdf-file" accept="application/pdf" style="display: none;">
-        <div id="fc-pdf-dropzone" class="pdf-dropzone" style="padding: 24px 16px; margin-bottom: 12px;">
-          <span style="font-size: 2.2rem; display: block; margin-bottom: 4px;">📥</span>
-          <div style="font-weight: 700; font-size: 0.96rem; color: #f8fafc;">Toca para subir un PDF o arrástralo aquí</div>
-          <div id="fc-file-status" style="font-size: 0.76rem; color: var(--text-muted); margin-top: 3px;">Genera tarjetas de estudio automáticas desde tus lecturas</div>
-        </div>
-
-        <button id="btn-generate-fc-ai" class="btn-primary" style="width: 100%; padding: 14px; justify-content: center; font-size: 0.95rem; opacity: 0.6;" disabled>
-          ⚡ Generar Flashcards con IA
+        <button id="btn-open-custom-expense" class="btn-spend-custom">
+          <span>+</span> Ingresar otro valor o concepto
         </button>
-
-        <!-- Indicador de Carga -->
-        <div id="fc-ai-status-container" class="status-loading-box" style="display: none; margin-top: 12px;">
-          <div id="fc-ai-status-spinner" class="spinner-dual-ring" style="width: 20px; height: 20px;"></div>
-          <span id="fc-ai-status-text" style="font-size: 0.85rem; font-weight: 600; color: #f8fafc;">Leyendo PDF...</span>
-        </div>
-
-        <!-- Alerta de error -->
-        <div id="fc-ai-error-message" class="error-alert-box" style="margin-top: 10px;"></div>
       </div>
 
-      <!-- 2. Visor 3D Interactivo de la Baraja (Visible cuando hay tarjetas) -->
-      <div id="fc-viewer-container" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin: 14px 4px 10px 4px;">
-          <span id="fc-counter" style="font-size: 0.88rem; color: var(--text-secondary); font-weight: 700;">1 / 10</span>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <button id="btn-delete-card" style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.78rem; font-weight: 600; padding: 5px 11px; border-radius: 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Eliminar esta tarjeta">
-              🗑️ Borrar
-            </button>
-            <button id="btn-clear-deck" style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.3); color: #fb7185; font-size: 0.78rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-              Vaciar Baraja
-            </button>
-          </div>
-        </div>
-
-        <!-- Tarjeta 3D Volteable Limpia -->
-        <div class="flip-card-wrapper">
-          <div id="flashcard-flip" class="flip-card">
-            <!-- Frente -->
-            <div class="flip-face">
-              <span id="fc-subject-tag" class="card-hint">Pregunta</span>
-              <p id="fc-question" class="card-text">Pregunta</p>
-              <div style="height: 4px;"></div>
-            </div>
-            <!-- Dorso -->
-            <div class="flip-face flip-face-back">
-              <span class="card-hint" style="color: #a78bfa;">Respuesta</span>
-              <p id="fc-answer" class="card-text">Respuesta</p>
-              <div style="height: 4px;"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Calificación de Repaso -->
-        <div class="card-action-bar">
-          <button class="grade-btn hard" data-grade="hard">😓 Difícil</button>
-          <button class="grade-btn good" data-grade="good">🤔 Bien</button>
-          <button class="grade-btn easy" data-grade="easy">⚡ Fácil</button>
-        </div>
-      </div>
-
-      <!-- 3. Empty State Elegante (Visible cuando la baraja está vacía) -->
-      <div id="fc-empty-state" class="glass-card" style="text-align: center; padding: 36px 20px; margin-top: 10px;">
-        <div style="font-size: 2.8rem; margin-bottom: 10px; filter: drop-shadow(0 4px 14px var(--primary-glow));">🗂️</div>
-        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 6px;">Baraja Vacía</h3>
-        <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 380px; margin: 0 auto; line-height: 1.4;">
-          Aún no tienes tarjetas. Sube un documento PDF arriba para que la IA genere tu baraja de estudio al instante.
-        </p>
-      </div>
-    </section>
-
-    <!-- 4. VISTA TAREAS -->
-    <section id="view-tasks" class="view-panel">
-      <!-- Formulario Agregar Tarea -->
-      <form id="form-add-task" class="task-input-bar">
-        <input id="input-task-title" type="text" class="input-field" placeholder="Nueva tarea o examen..." required>
-        <button type="submit" class="btn-primary">Agregar</button>
-      </form>
-
-      <!-- Opciones Rápidas de la Tarea -->
-      <div style="display: flex; gap: 8px; margin-bottom: 14px;">
-        <select id="task-subject-select" class="input-field" style="padding: 6px 10px; font-size: 0.85rem;">
-          <!-- Dinámico -->
-        </select>
-        <select id="task-priority-select" class="input-field" style="padding: 6px 10px; font-size: 0.85rem; width: 120px;">
-          <option value="high">Prioridad Alta</option>
-          <option value="medium" selected>Media</option>
-          <option value="low">Baja</option>
-        </select>
-      </div>
-
-      <!-- Filtros de Tareas -->
-      <div style="display: flex; gap: 8px; margin-bottom: 14px;">
-        <button class="deck-chip task-filter-btn active" data-filter="all">Todas</button>
-        <button class="deck-chip task-filter-btn" data-filter="pending">Pendientes</button>
-        <button class="deck-chip task-filter-btn" data-filter="completed">Completadas</button>
-      </div>
-
-      <!-- Lista de Tareas -->
-      <div id="task-list-items" class="task-list">
-        <!-- Renderizado dinámicamente -->
-      </div>
-    </section>
-
-    <!-- 5. VISTA AJUSTES / MATERIAS -->
-    <section id="view-settings" class="view-panel">
-      <!-- Gestión de Materias -->
+      <!-- Gastos Registrados Hoy -->
       <div class="glass-card">
-        <h3 style="font-size: 1.1rem; margin-bottom: 12px;">📚 Mis Materias</h3>
-        
-        <form id="form-add-subject" style="display: flex; gap: 8px; margin-bottom: 14px;">
-          <input id="new-sub-icon" type="text" class="input-field" placeholder="Ícono" value="📖" style="width: 60px; text-align: center;">
-          <input id="new-sub-name" type="text" class="input-field" placeholder="Nombre de materia..." required>
-          <button type="submit" class="btn-primary">+</button>
-        </form>
-
-        <div id="settings-subjects-list">
-          <!-- Renderizado dinámicamente -->
-        </div>
-      </div>
-
-      <!-- Respaldo de Datos Offline -->
-      <div class="glass-card">
-        <h3 style="font-size: 1.1rem; margin-bottom: 8px;">💾 Copia de Seguridad Offline</h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-          Todos tus datos se guardan de forma privada en el almacenamiento local de este dispositivo.
-        </p>
-
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <button id="btn-export-data" class="btn-primary" style="flex: 1; padding: 10px;">
-            📥 Descargar Respaldo JSON
-          </button>
-          <label class="btn-primary" style="flex: 1; padding: 10px; text-align: center; background: var(--bg-surface); border: 1px solid var(--border-color); cursor: pointer;">
-            📤 Restaurar Respaldo
-            <input type="file" id="input-import-data" accept=".json" style="display: none;">
-          </label>
-        </div>
-      </div>
-    </section>
-
-    <!-- 6. VISTA APUNTES INTELIGENTES CON IA -->
-    <section id="view-notes" class="view-panel">
-      <!-- Card: Subida y Extracción de PDF -->
-      <div class="glass-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h2 style="font-size: 1.15rem; font-weight: 700;">📄 Apuntes & Mapa Mental con IA</h2>
-          <span class="offline-pill" style="font-size: 0.72rem; color: #38bdf8; border-color: rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.1);">⚡ Gemini 1.5 Flash</span>
-        </div>
-        
-        <input type="file" id="notes-pdf-file" accept="application/pdf" style="display: none;">
-        <div id="notes-pdf-dropzone" class="pdf-dropzone">
-          <span class="pdf-dropzone-icon">📥</span>
-          <div style="font-weight: 700; font-size: 1rem; color: #f8fafc; margin-bottom: 4px;">Toca para subir un PDF o arrástralo aquí</div>
-          <div style="font-size: 0.78rem; color: var(--text-muted);">Extracción 100% en el cliente vía PDF.js sin intermediarios</div>
+        <div class="section-title-wrap">
+          <h2 class="section-title">
+            <span>📋</span> Gastos registrados hoy
+          </h2>
+          <span id="budget-total-spent-footer" style="font-size: 0.78rem; font-weight: 700; color: var(--accent-danger);">
+            Total hoy: $6.000
+          </span>
         </div>
 
-        <div id="notes-file-info" style="display: none; justify-content: space-between; align-items: center; background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 10px 14px; border-radius: var(--radius-md); margin-bottom: 14px;">
-          <span id="notes-file-name" style="font-size: 0.85rem; font-weight: 600; color: #38bdf8;">📄 documento.pdf</span>
-          <span style="font-size: 0.72rem; color: #34d399; font-weight: 600;">Listo</span>
-        </div>
-
-        <button id="btn-generate-notes" class="btn-primary" style="width: 100%; padding: 14px; justify-content: center; font-size: 0.98rem; opacity: 0.6;" disabled>
-          ⚡ Generar Apuntes y Mapa Mental con IA
-        </button>
-
-        <!-- Indicador de Progreso Dinámico -->
-        <div id="notes-status-container" class="status-loading-box" style="display: none;">
-          <div id="notes-status-spinner" class="spinner-dual-ring"></div>
-          <span id="notes-status-text" style="font-size: 0.88rem; font-weight: 600; color: #f8fafc;">Extrayendo PDF...</span>
-        </div>
-
-        <!-- Mensaje de Error -->
-        <div id="notes-error-message" class="error-alert-box"></div>
-      </div>
-
-      <!-- Card: Resultados (Markdown y Mapa Mental) -->
-      <div id="notes-results-card" class="glass-card" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
-          <!-- Barra de Tabs -->
-          <div class="result-tabs-bar" style="margin-bottom: 0;">
-            <button id="tab-btn-markdown" class="tab-btn-notes active">📝 Apuntes</button>
-            <button id="tab-btn-mindmap" class="tab-btn-notes">🗺️ Mapa Mental</button>
-          </div>
-
-          <!-- Acciones de Descarga / Copia -->
-          <div style="display: flex; gap: 8px;">
-            <button id="btn-copy-markdown" class="btn-primary" style="padding: 6px 12px; font-size: 0.78rem; background: var(--bg-surface); border: 1px solid var(--border-subtle);">📋 Copiar</button>
-            <button id="btn-download-markdown" class="btn-primary" style="padding: 6px 12px; font-size: 0.78rem; background: var(--bg-surface); border: 1px solid var(--border-subtle);">📥 .MD</button>
-            <button id="btn-save-note-history" class="btn-primary" style="padding: 6px 12px; font-size: 0.78rem;">💾 Guardar</button>
-          </div>
-        </div>
-
-        <!-- Panel 1: Apuntes en Markdown -->
-        <div id="panel-notes-markdown">
-          <div id="rendered-markdown-content" class="markdown-body">
-            <!-- Renderizado dinámico de Marked.js -->
-          </div>
-        </div>
-
-        <!-- Panel 2: Mapa Mental en Mermaid -->
-        <div id="panel-notes-mindmap" style="display: none;">
-          <div class="mindmap-scroll-area">
-            <div id="rendered-mindmap-svg" style="width: 100%;">
-              <!-- Renderizado dinámico de Mermaid.js -->
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card: Historial de Apuntes Guardados -->
-      <div class="glass-card">
-        <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 12px;">🗂️ Apuntes Recientes Guardados</h3>
-        <div id="notes-saved-history-list">
+        <div id="budget-expenses-list">
           <!-- Renderizado dinámicamente desde LocalStorage -->
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         PANTALLA 2: "CHEF FORÁNEO" (GENERADOR DE RECETAS CON IA)
+         -------------------------------------------------------------------- -->
+    <section id="view-chef" class="view-panel">
+      <div class="glass-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <h2 class="section-title" style="font-size: 1.15rem;">
+            <span>🍳</span> Chef Foráneo
+          </h2>
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--primary); background: rgba(16, 185, 129, 0.12); padding: 3px 8px; border-radius: var(--radius-pill);">
+            ⚡ Gemini Flash IA
+          </span>
+        </div>
+        <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 16px;">
+          Cocina rico con lo que hay en la despensa. Selecciona tus ingredientes:
+        </p>
+
+        <!-- Chips interactivos de ingredientes -->
+        <div class="ingredient-chips-grid">
+          <button type="button" class="chip-ingredient active" data-ingredient="Arroz"><span>🍚</span> Arroz</button>
+          <button type="button" class="chip-ingredient active" data-ingredient="Huevos"><span>🥚</span> Huevos</button>
+          <button type="button" class="chip-ingredient active" data-ingredient="Tomate"><span>🍅</span> Tomate</button>
+          <button type="button" class="chip-ingredient" data-ingredient="Atún"><span>🐟</span> Atún</button>
+          <button type="button" class="chip-ingredient" data-ingredient="Lentejas"><span>🥣</span> Lentejas</button>
+          <button type="button" class="chip-ingredient" data-ingredient="Cebolla"><span>🧅</span> Cebolla</button>
+          <button type="button" class="chip-ingredient" data-ingredient="Papa"><span>🥔</span> Papa</button>
+          <button type="button" class="chip-ingredient" data-ingredient="Queso"><span>🧀</span> Queso</button>
+          <button type="button" class="chip-ingredient" data-ingredient="Pasta"><span>🍝</span> Pasta</button>
+          <button type="button" class="chip-ingredient" data-ingredient="Ajo"><span>🧄</span> Ajo</button>
+          <button type="button" class="chip-ingredient" data-ingredient="Pollo"><span>🍗</span> Pollo</button>
+          <button type="button" class="chip-ingredient" data-ingredient="Maíz"><span>🌽</span> Maíz</button>
+          <button type="button" id="btn-add-custom-ingredient" class="chip-ingredient chip-ingredient-add">
+            <span>+</span> Otro ingrediente
+          </button>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <span id="chef-selected-count" style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted);">
+            3 ingredientes seleccionados
+          </span>
+          <span style="font-size: 0.74rem; color: var(--text-subtle);">Mínimo 1 ingrediente</span>
+        </div>
+
+        <button id="btn-generate-recipe" class="btn-primary-neon">
+          <span>⚡</span> Crear receta con IA
+        </button>
+
+        <!-- Spinner de carga dinámico -->
+        <div id="chef-status-container" class="loading-box" style="display: none;">
+          <div class="spinner-ring"></div>
+          <span id="chef-status-text" style="font-size: 0.84rem; font-weight: 700; color: var(--text-white);">
+            Creando receta económica en segundos...
+          </span>
+        </div>
+      </div>
+
+      <!-- Tarjeta de Resultado de la Receta -->
+      <div id="chef-result-container" style="display: none;">
+        <!-- Inyectado dinámicamente con badges, pasos y tips -->
+      </div>
+
+      <!-- Recetas Guardadas para Emergencias -->
+      <div class="glass-card" style="margin-top: 18px;">
+        <div class="section-title-wrap">
+          <h3 class="section-title" style="font-size: 0.95rem;">
+            <span>⭐</span> Recetas guardadas en favoritas
+          </h3>
+        </div>
+        <div id="chef-saved-recipes-list">
+          <!-- Renderizado dinámicamente -->
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         PANTALLA 3: "HACKS DE VIDA" (TRUCOS & RETO GAMIFICADO)
+         -------------------------------------------------------------------- -->
+    <section id="view-hacks" class="view-panel">
+      <!-- Píldoras de filtrado -->
+      <div class="hacks-filter-row">
+        <button class="hack-filter-btn active" data-filter="todos">✨ Para ti</button>
+        <button class="hack-filter-btn" data-filter="ahorro">💰 Ahorro</button>
+        <button class="hack-filter-btn" data-filter="cocina">🍳 Cocina</button>
+        <button class="hack-filter-btn" data-filter="casa">🏠 Casa</button>
+      </div>
+
+      <!-- Tarjeta destacada: "EL HACK DE LA SEMANA" -->
+      <div class="hack-week-card">
+        <div class="hack-week-badge">⭐ EL HACK DE LA SEMANA</div>
+        <h3 class="hack-week-title">Cocina una vez. Resuelve 3 días.</h3>
+        <p class="hack-week-desc">
+          El método "Batch Cooking" para foráneos: cocina una olla base de arroz y granos el domingo. Ahorra hasta <strong>$24.000 / semana</strong> en almuerzos y cero estrés entre semana.
+        </p>
+        <button id="btn-read-hack-week" class="btn-primary-neon" style="padding: 10px 16px; font-size: 0.85rem; width: auto; display: inline-flex;">
+          📖 Ver cómo aplicarlo
+        </button>
+      </div>
+
+      <!-- Lista de trucos interactivos -->
+      <div style="margin-bottom: 8px;">
+        <h3 class="section-title" style="margin-bottom: 12px;">
+          <span>💡</span> Tu bolsillo te lo agradece
+        </h3>
+        <div id="hacks-list-container">
+          <!-- Renderizado dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Widget Gamificado: Reto 3 días sin delivery -->
+      <div class="challenge-widget-card">
+        <div class="challenge-header">
+          <span class="challenge-title">
+            <span>🎯</span> Reto: 3 días sin pedir delivery
+          </span>
+          <span id="challenge-counter-text" class="challenge-counter">(2/3)</span>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-muted);">
+          Toca cada día que cocinaste o comiste en casa para registrar tu victoria:
+        </p>
+
+        <div class="challenge-days-row">
+          <button class="challenge-day-btn completed" data-day="0">
+            <span class="day-label">Día 1</span>
+            <span class="day-check">✓</span>
+          </button>
+          <button class="challenge-day-btn completed" data-day="1">
+            <span class="day-label">Día 2</span>
+            <span class="day-check">✓</span>
+          </button>
+          <button class="challenge-day-btn" data-day="2">
+            <span class="day-label">Día 3</span>
+            <span class="day-check">○</span>
+          </button>
+        </div>
+
+        <div id="challenge-success-msg" style="display: none; margin-top: 12px; padding: 10px; background: rgba(16, 185, 129, 0.15); border: 1px solid var(--primary); border-radius: var(--radius-md); font-size: 0.82rem; color: #a7f3d0; text-align: center; font-weight: 700;">
+          🎉 ¡Reto cumplido! Ahorraste aproximadamente $45.000 esta semana.
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         PANTALLA 4: "PAGOS AL DÍA" (CONTROL DE VENCIMIENTOS)
+         -------------------------------------------------------------------- -->
+    <section id="view-bills" class="view-panel">
+      <!-- Header con widget mensual -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+          <h2 class="section-title" style="font-size: 1.15rem;">
+            <span>📅</span> Pagos al Día
+          </h2>
+          <span id="bills-month-badge" style="font-size: 0.76rem; color: var(--text-muted); font-weight: 600;">Mes en curso</span>
+        </div>
+        <button id="btn-enable-bill-notifications" class="btn-header-action" style="font-size: 0.74rem;">
+          <span>🔔</span> Recordatorios
+        </button>
+      </div>
+
+      <!-- Widget Mensual: Total pendiente vs Pagado -->
+      <div class="bills-monthly-summary">
+        <div class="bills-summary-box">
+          <div class="bills-summary-label">TOTAL PENDIENTE</div>
+          <div id="bills-total-pending" class="bills-summary-amount amount-pending">$380.000</div>
+        </div>
+        <div class="bills-summary-box">
+          <div class="bills-summary-label">YA PAGADO</div>
+          <div id="bills-total-paid" class="bills-summary-amount amount-paid">$45.000</div>
+        </div>
+      </div>
+
+      <!-- Sección Próximos Vencimientos -->
+      <div class="glass-card">
+        <div class="section-title-wrap">
+          <h3 class="section-title">
+            <span>🚨</span> Próximos vencimientos
+          </h3>
+          <span style="font-size: 0.72rem; color: var(--text-muted);">Toca ✓ para pagar</span>
+        </div>
+
+        <div id="bills-pending-list">
+          <!-- Renderizado dinámicamente -->
+        </div>
+
+        <button id="btn-open-add-bill" class="btn-primary-neon" style="margin-top: 14px;">
+          <span>+</span> Agregar un pago
+        </button>
+      </div>
+
+      <!-- Sección "Ya puedes respirar 😌" (Pagos completados) -->
+      <div class="glass-card">
+        <div class="section-title-wrap">
+          <h3 class="section-title" style="color: var(--primary);">
+            <span>😌</span> Ya puedes respirar
+          </h3>
+          <span style="font-size: 0.72rem; color: var(--text-muted);">Completados este mes</span>
+        </div>
+
+        <div id="bills-paid-list">
+          <!-- Renderizado dinámicamente -->
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- Modal: Programar Actividad / Clase / Pendiente -->
-  <div id="modal-schedule-event" class="modal-overlay">
+  <!-- ========================================================================
+       MODALES FLOTANTES
+       ======================================================================== -->
+
+  <!-- Modal 1: Agregar Gasto Personalizado -->
+  <div id="modal-add-expense" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>📅 Programar Actividad</h3>
-        <button id="btn-close-schedule-modal" class="modal-close" aria-label="Cerrar">✕</button>
+        <h3>💸 Registrar Gasto</h3>
+        <button id="btn-close-expense-modal" class="modal-close">✕</button>
       </div>
-      <form id="form-schedule-event">
-        <div class="form-group" style="margin-bottom: 14px;">
-          <label style="display: block; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;">Título de la actividad *</label>
-          <input type="text" id="schedule-event-title" class="input-field" placeholder="Ej. Clase de Algoritmos, Entrega de Tarea..." required style="width: 100%;">
+      <form id="form-custom-expense">
+        <div class="form-group">
+          <label class="form-label">¿En qué se te fue la plata? *</label>
+          <input type="text" id="input-custom-title" class="input-field" placeholder="Ej. Copias de cálculo, Farmacia, Cerveza..." required>
         </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
-          <div class="form-group">
-            <label style="display: block; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;">Materia</label>
-            <select id="schedule-event-subject" class="input-field" style="width: 100%;">
-              <option value="General">📚 General</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label style="display: block; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;">Tipo</label>
-            <select id="schedule-event-type" class="input-field" style="width: 100%;">
-              <option value="class">📚 Clase</option>
-              <option value="task">📝 Tarea</option>
-              <option value="exam">🚨 Examen</option>
-            </select>
-          </div>
+        <div class="form-group">
+          <label class="form-label">Monto en pesos ($) *</label>
+          <input type="number" id="input-custom-amount" class="input-field" placeholder="Ej. 4500" required min="100" step="100">
         </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-          <div class="form-group">
-            <label style="display: block; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;">Fecha</label>
-            <input type="date" id="schedule-event-date" class="input-field" required style="width: 100%;">
-          </div>
-          <div class="form-group">
-            <label style="display: block; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;">Hora</label>
-            <input type="time" id="schedule-event-time" class="input-field" value="08:00" required style="width: 100%;">
-          </div>
+        <div class="form-group">
+          <label class="form-label">Ícono identificador</label>
+          <select id="select-custom-icon" class="input-field">
+            <option value="💸">💸 Varios</option>
+            <option value="🍔">🍔 Comida / Calle</option>
+            <option value="🚌">🚌 Transporte / Bus</option>
+            <option value="🍺">🍺 Rumba / Amigos</option>
+            <option value="💊">💊 Farmacia / Salud</option>
+            <option value="🛒">🛒 Supermercado</option>
+            <option value="📚">📚 Universidad</option>
+          </select>
         </div>
-
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-          <input type="checkbox" id="schedule-event-reminder" checked style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
-          <label for="schedule-event-reminder" style="font-size: 0.84rem; color: #f8fafc; cursor: pointer;">
-            🔔 Activar recordatorio visual
-          </label>
-        </div>
-
-        <div style="display: flex; gap: 10px;">
-          <button type="submit" class="btn-primary" style="flex: 1; padding: 12px; justify-content: center; font-size: 0.95rem;">
-            Guardar Actividad
-          </button>
-        </div>
+        <button type="submit" class="btn-primary-neon" style="margin-top: 10px;">
+          Registrar Gasto
+        </button>
       </form>
     </div>
   </div>
 
-  <!-- Bottom Navigation Bar (Estilo Nativo Mobile) -->
+  <!-- Modal 2: Ajustar Presupuesto Diario -->
+  <div id="modal-set-budget" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>💰 Presupuesto Diario</h3>
+        <button id="btn-close-budget-modal" class="modal-close">✕</button>
+      </div>
+      <form id="form-set-budget">
+        <div class="form-group">
+          <label class="form-label">¿Cuánto puedes gastar por día? ($)</label>
+          <input type="number" id="input-budget-value" class="input-field" value="20500" required min="1000" step="500">
+        </div>
+        <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 14px;">
+          Este valor se reinicia cada mañana y sirve de base para calcular tu disponible diario y alertarte si te estás pasando.
+        </p>
+        <button type="submit" class="btn-primary-neon">
+          Guardar Presupuesto
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Agregar Pago / Recibo -->
+  <div id="modal-add-bill" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>📅 Agregar Pago / Servicio</h3>
+        <button id="btn-close-bill-modal" class="modal-close">✕</button>
+      </div>
+      <form id="form-add-bill">
+        <div class="form-group">
+          <label class="form-label">Nombre del pago *</label>
+          <input type="text" id="input-bill-name" class="input-field" placeholder="Ej. Arriendo, Gas, Cuota mensual..." required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monto a pagar ($) *</label>
+          <input type="number" id="input-bill-amount" class="input-field" placeholder="Ej. 120000" required min="1000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Día de vencimiento de cada mes (1-31) *</label>
+          <input type="number" id="input-bill-day" class="input-field" min="1" max="31" value="5" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nota o instrucción adicional (opcional)</label>
+          <input type="text" id="input-bill-notes" class="input-field" placeholder="Ej. Se paga por Nequi a doña Marta">
+        </div>
+        <button type="submit" class="btn-primary-neon" style="margin-top: 10px;">
+          Guardar Pago
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: Mini-guía Hack de la semana -->
+  <div id="modal-hack-week" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🍱 El Método Batch Cooking</h3>
+        <button id="btn-close-hack-modal" class="modal-close">✕</button>
+      </div>
+      <div style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.55;">
+        <p style="margin-bottom: 10px;">
+          Cocinar todos los días siendo estudiante foráneo quita tiempo de estudio y cansa, lo que lleva a pedir comida rápida cara.
+        </p>
+        <strong style="color: var(--text-white); display: block; margin-bottom: 4px;">Paso a paso foráneo:</strong>
+        <ol style="padding-left: 20px; margin-bottom: 12px;">
+          <li>Cocina 3 tazas de arroz el domingo y déjalo enfriar antes de meterlo a la nevera.</li>
+          <li>Haz una olla de lentejas o frijoles sofritos con cebolla y tomate.</li>
+          <li>Durante la semana, solo necesitas freír un huevo o abrir una lata de atún en 3 minutos.</li>
+        </ol>
+        <div style="background: rgba(16, 185, 129, 0.12); padding: 10px; border-radius: var(--radius-md); border-left: 3px solid var(--primary); color: #a7f3d0;">
+          💡 <strong>Resultado:</strong> Ahorro comprobado de hasta $24.000 por semana y almuerzo listo al llegar cansado de la universidad.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       BARRA DE NAVEGACIÓN INFERIOR (BOTTOM NAV — 4 PESTAÑAS)
+       [💰 Mi Plata] [🍳 Chef Foráneo] [💡 Hacks] [📅 Pagos]
+       ======================================================================== -->
   <nav class="bottom-nav">
-    <button class="nav-item active" data-tab="dashboard">
-      <span class="nav-icon">📊</span>
-      <span>Inicio</span>
+    <button class="nav-item active" data-tab="budget">
+      <span class="nav-icon">💰</span>
+      <span class="nav-label">Mi Plata</span>
     </button>
-    <button class="nav-item" data-tab="pomodoro">
-      <span class="nav-icon">⏱️</span>
-      <span>Pomodoro</span>
+    <button class="nav-item" data-tab="chef">
+      <span class="nav-icon">🍳</span>
+      <span class="nav-label">Chef Foráneo</span>
     </button>
-    <button class="nav-item" data-tab="flashcards">
-      <span class="nav-icon">🗂️</span>
-      <span>Tarjetas</span>
+    <button class="nav-item" data-tab="hacks">
+      <span class="nav-icon">💡</span>
+      <span class="nav-label">Hacks</span>
     </button>
-    <button class="nav-item" data-tab="notes">
-      <span class="nav-icon">🧠</span>
-      <span>Apuntes IA</span>
-    </button>
-    <button class="nav-item" data-tab="tasks">
-      <span class="nav-icon">📝</span>
-      <span>Tareas</span>
-    </button>
-    <button class="nav-item" data-tab="settings">
-      <span class="nav-icon">📚</span>
-      <span>Materias</span>
+    <button class="nav-item" data-tab="bills">
+      <span class="nav-icon">📅</span>
+      <span class="nav-label">Pagos</span>
     </button>
   </nav>
 
-  <!-- Scripts -->
-  <script src="./js/storage.js"></script>
-  <script src="./js/pomodoro.js"></script>
-  <script src="./js/flashcards.js?v=22"></script>
-  <script src="./js/tasks.js"></script>
-  <script src="./js/calendar.js?v=24"></script>
-  <script src="./js/notes.js?v=24"></script>
-  <script src="./js/app.js?v=24"></script>
+  <!-- ========================================================================
+       SCRIPTS MODULARES (V26)
+       ======================================================================== -->
+  <script src="./js/budget.js?v=26"></script>
+  <script src="./js/chef.js?v=26"></script>
+  <script src="./js/hacks.js?v=26"></script>
+  <script src="./js/bills.js?v=26"></script>
+  <script src="./js/app.js?v=26"></script>
 </body>
 </html>
