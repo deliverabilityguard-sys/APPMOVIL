@@ -1,4 +1,4 @@
-const CACHE_NAME = 'appestudio-v20';
+const CACHE_NAME = 'appestudio-v21';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -25,7 +25,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Instalando versión v20...');
+      console.log('[Service Worker] Instalando versión v21...');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
@@ -44,7 +44,7 @@ self.addEventListener('activate', (event) => {
         })
       );
     }).then(() => {
-      console.log('[Service Worker] v20 activo y tomando control');
+      console.log('[Service Worker] v21 activo y tomando control');
       return self.clients.claim();
     })
   );

@@ -229,14 +229,14 @@ class FlashcardsController {
       this.dom.btnGenerateAI.disabled = true;
       this.setAIStatus(true, 'Leyendo PDF...');
 
-      // 1. Extraer texto del PDF (máx. 8 páginas)
+      // 1. Extraer texto del PDF (máx. 3 páginas para procesamiento ultrarrápido)
       window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
       const arrayBuffer = await this.selectedPdfFile.arrayBuffer();
       const loadingTask = window.pdfjsLib.getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
 
       let fullText = '';
-      const pagesToRead = Math.min(pdf.numPages, 8);
+      const pagesToRead = pdf.numPages > 4 ? 3 : Math.min(pdf.numPages, 4);
 
       for (let pageNum = 1; pageNum <= pagesToRead; pageNum++) {
         this.setAIStatus(true, `Leyendo página ${pageNum} de ${pagesToRead}...`);
@@ -246,23 +246,23 @@ class FlashcardsController {
         if (pageText.trim()) fullText += `\n${pageText}\n`;
       }
 
-      // 2. Limpieza y recorte seguro a 10,000 caracteres
-      const cleanText = fullText.slice(0, 10000).replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+      // 2. Limpieza y recorte seguro a 4,500 caracteres (máx. velocidad de inferencia)
+      const cleanText = fullText.slice(0, 4500).replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 
       if (!cleanText.trim()) {
         throw new Error('El PDF no contiene texto legible (posible documento escaneado solo con imágenes).');
       }
 
-      // 3. Consulta directa a Gemini
-      this.setAIStatus(true, 'Generando tarjetas con IA...');
+      // 3. Consulta directa a Gemini con configuración de alta velocidad
+      this.setAIStatus(true, 'Generando tarjetas ultrarrápidas con IA...');
 
       const promptInstructions = `
-Actúa como un profesor y diseñador experto de tarjetas de estudio mnemotécnicas (flashcards).
-A partir del siguiente texto de estudio, genera entre 6 y 12 flashcards de alta calidad que cubran los conceptos, definiciones, fórmulas y datos clave más importantes para memorizar.
+Actúa como profesor y diseñador experto de tarjetas mnemotécnicas (flashcards).
+A partir del siguiente texto de estudio, genera entre 5 y 8 flashcards concisas y de alta calidad con preguntas directas y respuestas cortas (máximo 2 líneas por respuesta).
 
 Cada flashcard debe tener:
-- "pregunta": Pregunta clara, concepto o término a definir (frente de la tarjeta).
-- "respuesta": Explicación concisa, directa y fácil de recordar (dorso de la tarjeta).
+- "pregunta": Pregunta clara, concepto o término clave.
+- "respuesta": Explicación concisa, directa y fácil de recordar.
 
 IMPORTANTE: Responde ÚNICAMENTE un arreglo JSON válido de objetos con las propiedades "pregunta" y "respuesta". Sin texto adicional ni bloques markdown.
 Ejemplo:
@@ -277,8 +277,9 @@ ${cleanText}
       const requestPayload = {
         contents: [{ parts: [{ text: promptInstructions }] }],
         generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.3
+          temperature: 0.2,            // Menor dispersión, generación mucho más rápida y directa
+          maxOutputTokens: 1200,       // Evita respuestas sobrecargadas
+          responseMimeType: "application/json"
         }
       };
 

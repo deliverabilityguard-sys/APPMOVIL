@@ -188,9 +188,12 @@ class SmartNotesController {
     const loadingTask = window.pdfjsLib.getDocument({ data: arrayBuffer });
     const pdf = await loadingTask.promise;
 
+    // Si el PDF tiene más de 4 páginas, extrae solo las primeras 3 páginas principales para evitar sobrecargar memoria
+    const pagesToExtract = pdf.numPages > 4 ? 3 : Math.min(pdf.numPages, 4);
+
     let fullText = '';
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      this.setStatus(true, `Extrayendo PDF (página ${pageNum} de ${pdf.numPages})...`, false);
+    for (let pageNum = 1; pageNum <= pagesToExtract; pageNum++) {
+      this.setStatus(true, `Extrayendo PDF (página ${pageNum} de ${pagesToExtract})...`, false);
       const page = await pdf.getPage(pageNum);
       const textContent = await page.getTextContent();
       const pageText = textContent.items.map(item => item.str).join(' ');
@@ -213,27 +216,26 @@ class SmartNotesController {
     }
 
     try {
-      // 1. Extraer texto del documento
+      // 1. Extraer texto del documento (optimizado a máx 3 páginas)
       const pdfText = await this.extractTextFromPDF(this.selectedFile);
 
-      // 2. Limpieza y recorte seguro a 10,000 caracteres
-      const cleanText = pdfText.slice(0, 10000).replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+      // 2. Limpieza y recorte estricto a 4,500 caracteres (máx. 4,000 a 5,000 para procesamiento ultrarrápido)
+      const cleanText = pdfText.slice(0, 4500).replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 
       if (!cleanText.trim()) {
         throw new Error('El contenido extraído del PDF está vacío tras la limpieza.');
       }
 
       // 3. Indicador de carga activo
-      this.setStatus(true, 'Generando con IA...', false);
+      this.setStatus(true, 'Generando apuntes ultrarrápidos con IA...', false);
 
       const promptInstructions = `
-Actúa como un profesor universitario y sintetizador académico de élite.
-A partir del siguiente texto extraído de un documento de estudio, genera:
+Actúa como un profesor y sintetizador académico.
+Genera un resumen conciso en Markdown (máximo 3 puntos clave con viñetas cortas) y un mapa mental en Mermaid 'mindmap' con un nodo central y máximo 3 ramas principales cortas. Sé extremadamente conciso y directo.
 
-1. "apuntes": Un resumen de estudio completo, estructurado y de alto impacto en Markdown (resumen ejecutivo, conceptos en **negrita**, listas y puntos clave para repaso).
-2. "mapa_mental": Mapa mental estructurado en sintaxis Mermaid.js tipo "mindmap", iniciando obligatoriamente con "mindmap" y nodo raíz "  root((Tema Central))" sin caracteres conflictivos en el texto de los nodos.
-
-Responde ÚNICAMENTE un objeto JSON válido con las claves "apuntes" y "mapa_mental".
+Responde ÚNICAMENTE un objeto JSON válido con las claves:
+- "apuntes": resumen conciso en Markdown (título y máximo 3 viñetas cortas con conceptos clave en **negrita**).
+- "mapa_mental": mapa mental en sintaxis Mermaid.js iniciando obligatoriamente con "mindmap" y nodo central "  root((Tema Central))" con máximo 3 ramas principales cortas.
 
 Texto del documento:
 ${cleanText}
@@ -242,8 +244,9 @@ ${cleanText}
       const requestPayload = {
         contents: [{ parts: [{ text: promptInstructions }] }],
         generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.3
+          temperature: 0.2,            // Menos dispersión, generación mucho más rápida y directa
+          maxOutputTokens: 1200,       // Evita respuestas eternas que tardan en transmitirse
+          responseMimeType: "application/json"
         }
       };
 
