@@ -8,6 +8,7 @@ class App {
 
   init() {
     this.setupPWA();
+    this.setupLandingPage();
     this.setupNavigation();
     this.renderDashboard();
     this.setupSettingsView();
@@ -21,6 +22,75 @@ class App {
     const hash = window.location.hash.replace('#', '');
     if (hash && ['dashboard', 'pomodoro', 'flashcards', 'tasks', 'notes', 'settings'].includes(hash)) {
       this.switchTab(hash);
+    }
+  }
+
+  // Control de la Landing Page / Instalador para visitantes desde navegador
+  setupLandingPage() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const overlay = document.getElementById('landing-install-overlay');
+    const btnInstall = document.getElementById('btn-landing-install');
+    const btnSkip = document.getElementById('btn-landing-skip');
+    const guideBox = document.getElementById('landing-install-guide');
+
+    // 1. Si ya se ejecuta como app instalada (standalone), funcionamiento 100% normal
+    if (isStandalone) {
+      document.documentElement.classList.remove('show-landing');
+      if (overlay) overlay.style.display = 'none';
+      return;
+    }
+
+    // 2. Si no es standalone pero ya se seleccionó "Probar en la web" en esta sesión
+    const skipped = sessionStorage.getItem('pwa_skip_landing');
+    if (!skipped) {
+      document.documentElement.classList.add('show-landing');
+      if (overlay) overlay.style.display = 'flex';
+    } else {
+      document.documentElement.classList.remove('show-landing');
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    // 3. Botón principal: "📲 Instalar Aplicación"
+    if (btnInstall) {
+      btnInstall.addEventListener('click', async () => {
+        if (this.deferredPrompt) {
+          this.deferredPrompt.prompt();
+          const { outcome } = await this.deferredPrompt.userChoice;
+          console.log(`[PWA] Respuesta instalación desde Landing: ${outcome}`);
+          if (outcome === 'accepted') {
+            this.deferredPrompt = null;
+            this.hideLandingOverlay();
+          }
+        } else {
+          // Mostrar instrucciones cuando no hay evento nativo disponible (Safari iOS / Desktop)
+          if (guideBox) {
+            const isVisible = guideBox.style.display === 'block';
+            guideBox.style.display = isVisible ? 'none' : 'block';
+            if (!isVisible) {
+              guideBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }
+        }
+      });
+    }
+
+    // 4. Botón secundario: "Probar en la web sin instalar"
+    if (btnSkip) {
+      btnSkip.addEventListener('click', () => {
+        sessionStorage.setItem('pwa_skip_landing', 'true');
+        this.hideLandingOverlay();
+      });
+    }
+  }
+
+  hideLandingOverlay() {
+    const overlay = document.getElementById('landing-install-overlay');
+    if (overlay) {
+      overlay.classList.add('fade-out');
+      setTimeout(() => {
+        document.documentElement.classList.remove('show-landing');
+        overlay.style.display = 'none';
+      }, 350);
     }
   }
 
@@ -78,6 +148,7 @@ class App {
     window.addEventListener('appinstalled', () => {
       console.log('[PWA] App de Estudio instalada exitosamente');
       if (installBtn) installBtn.classList.remove('visible');
+      this.hideLandingOverlay();
     });
 
     // Detectar si ya se está ejecutando como PWA instalada (standalone)

@@ -22,8 +22,93 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+  <!-- Detección Inmediata de Modo PWA Instalada vs Navegador -->
+  <script>
+    (function() {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      if (!isStandalone && !sessionStorage.getItem('pwa_skip_landing')) {
+        document.documentElement.classList.add('show-landing');
+      }
+    })();
+  </script>
 </head>
 <body>
+
+  <!-- Pantalla de Bienvenida / Instalador PWA (Landing Page para Navegador Web) -->
+  <div id="landing-install-overlay" class="landing-overlay">
+    <div class="landing-container">
+      <div class="landing-badge">
+        <span>⚡</span> PWA Móvil & Offline
+      </div>
+      
+      <div class="landing-hero">
+        <img src="./icons/icon.svg" alt="App de Estudio Emile" class="landing-logo">
+        <h1 class="landing-title">App de Estudio Emile</h1>
+        <p class="landing-subtitle">
+          Tu compañero universitario de estudio inteligente: resúmenes con IA, mapas mentales, flashcards, calendario y método Pomodoro 100% offline.
+        </p>
+      </div>
+
+      <!-- Beneficios Principales -->
+      <div class="landing-features-grid">
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">🧠</span>
+          <div>
+            <strong>Apuntes & Mapas Mentales con IA</strong>
+            <p>Convierte PDFs en resúmenes ejecutivos y diagramas Mermaid en segundos.</p>
+          </div>
+        </div>
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">🗂️</span>
+          <div>
+            <strong>Tarjetas Flashcards Mnemotécnicas</strong>
+            <p>Generación de tarjetas de estudio desde PDF con animación de giro 3D.</p>
+          </div>
+        </div>
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">📅</span>
+          <div>
+            <strong>Clases y Pendientes del Día</strong>
+            <p>Organiza materias, entregas, exámenes y recordatorios en tu inicio.</p>
+          </div>
+        </div>
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">⏱️</span>
+          <div>
+            <strong>Pomodoro & Enfoque 100% Offline</strong>
+            <p>Tus datos se quedan en tu dispositivo; estudia sin gastar tu plan de datos.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones de Instalación y Acceso -->
+      <div class="landing-actions">
+        <button id="btn-landing-install" class="btn-primary btn-landing-install">
+          <span>📲</span> Instalar Aplicación
+        </button>
+        <button id="btn-landing-skip" class="btn-landing-skip">
+          Probar en la web sin instalar →
+        </button>
+      </div>
+
+      <!-- Instrucciones para navegadores sin prompt automático (Safari iOS / Escritorio) -->
+      <div id="landing-install-guide" class="landing-guide-box" style="display: none;">
+        <div style="font-size: 0.84rem; font-weight: 700; color: #38bdf8; margin-bottom: 6px;">
+          💡 Pasos para instalar en tu pantalla de inicio:
+        </div>
+        <ul style="font-size: 0.78rem; color: var(--text-secondary); margin: 0; padding-left: 18px; line-height: 1.5;">
+          <li><strong>En iPhone / iPad (Safari):</strong> Toca el botón <em>Compartir</em> (ícono cuadrado con flecha hacia arriba ⎋) y pulsa en <em>"Agregar a la pantalla principal" ➕</em>.</li>
+          <li><strong>En Android (Chrome / Edge):</strong> Toca los tres puntos (⋮) arriba a la derecha y selecciona <em>"Instalar app"</em> o <em>"Agregar a la pantalla principal"</em>.</li>
+          <li><strong>En Computadora:</strong> Haz clic en el ícono de instalación en la barra de direcciones del navegador.</li>
+        </ul>
+      </div>
+
+      <div class="landing-footer">
+        <span>🔒 100% Privado • Funciona sin conexión a internet</span>
+      </div>
+    </div>
+  </div>
 
   <!-- Header Superior -->
   <header class="app-header">
@@ -464,10 +549,10 @@
   <!-- Scripts -->
   <script src="./js/storage.js"></script>
   <script src="./js/pomodoro.js"></script>
-  <script src="./js/flashcards.js?v=21"></script>
+  <script src="./js/flashcards.js?v=24"></script>
   <script src="./js/tasks.js"></script>
-  <script src="./js/calendar.js?v=21"></script>
-  <script src="./js/notes.js?v=21"></script>
-  <script src="./js/app.js?v=21"></script>
+  <script src="./js/calendar.js?v=24"></script>
+  <script src="./js/notes.js?v=24"></script>
+  <script src="./js/app.js?v=24"></script>
 </body>
 </html>
