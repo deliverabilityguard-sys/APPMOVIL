@@ -176,6 +176,37 @@
         <button class="grade-btn good" data-grade="good">🤔 Bien</button>
         <button class="grade-btn easy" data-grade="easy">⚡ Fácil</button>
       </div>
+
+      <!-- Card: Generar Flashcards con IA desde PDF -->
+      <div class="glass-card" style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h3 style="font-size: 1.05rem; font-weight: 700;">✨ Generar Flashcards desde PDF con IA</h3>
+          <span class="offline-pill" style="font-size: 0.7rem; color: #38bdf8; border-color: rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.1);">⚡ Auto-Baraja</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">
+          Sube tus lecturas o diapositivas en PDF y Gemini creará automáticamente tarjetas de preguntas y respuestas listas para repasar.
+        </p>
+
+        <input type="file" id="fc-pdf-file" accept="application/pdf" style="display: none;">
+        <div id="fc-pdf-dropzone" class="pdf-dropzone" style="padding: 22px 16px; margin-bottom: 12px;">
+          <span style="font-size: 2rem; display: block; margin-bottom: 4px;">📑</span>
+          <div style="font-weight: 700; font-size: 0.94rem; color: #f8fafc;">Toca para subir o arrastra tu PDF</div>
+          <div id="fc-file-status" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Hasta 8 páginas procesadas al instante</div>
+        </div>
+
+        <button id="btn-generate-fc-ai" class="btn-primary" style="width: 100%; padding: 13px; justify-content: center; font-size: 0.92rem; opacity: 0.6;" disabled>
+          ⚡ Generar Tarjetas con IA
+        </button>
+
+        <!-- Indicador de Carga -->
+        <div id="fc-ai-status-container" class="status-loading-box" style="display: none; margin-top: 12px; padding: 10px 14px;">
+          <div id="fc-ai-status-spinner" class="spinner-dual-ring" style="width: 20px; height: 20px;"></div>
+          <span id="fc-ai-status-text" style="font-size: 0.82rem; font-weight: 600; color: #f8fafc;">Leyendo PDF...</span>
+        </div>
+
+        <!-- Alerta de error -->
+        <div id="fc-ai-error-message" class="error-alert-box" style="margin-top: 10px;"></div>
+      </div>
     </section>
 
     <!-- 4. VISTA TAREAS -->
@@ -387,7 +418,7 @@
   <!-- Scripts -->
   <script src="./js/storage.js"></script>
   <script src="./js/pomodoro.js"></script>
-  <script src="./js/flashcards.js"></script>
+  <script src="./js/flashcards.js?v=12"></script>
   <script src="./js/tasks.js"></script>
   <script src="./js/notes.js?v=11"></script>
   <script src="./js/app.js?v=11"></script>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'appestudio-v11';
+const CACHE_NAME = 'appestudio-v12';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
