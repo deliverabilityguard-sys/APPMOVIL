@@ -1,4 +1,4 @@
-const CACHE_NAME = 'appestudio-v16';
+const CACHE_NAME = 'appestudio-v20';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const ASSETS_TO_CACHE = [
   './js/pomodoro.js',
   './js/flashcards.js',
   './js/tasks.js',
+  './js/calendar.js',
   './js/notes.js',
   './js/app.js',
   './icons/icon-192.png',
@@ -24,7 +25,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Instalando versión v11...');
+      console.log('[Service Worker] Instalando versión v20...');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
@@ -43,7 +44,7 @@ self.addEventListener('activate', (event) => {
         })
       );
     }).then(() => {
-      console.log('[Service Worker] v11 activo y tomando control');
+      console.log('[Service Worker] v20 activo y tomando control');
       return self.clients.claim();
     })
   );

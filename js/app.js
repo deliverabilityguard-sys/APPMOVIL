@@ -153,6 +153,11 @@ class App {
         `).join('');
       }
     }
+
+    // Clases y pendientes de hoy (Widget Calendario)
+    if (window.calendarManager) {
+      window.calendarManager.renderDashboardTodayEvents();
+    }
   }
 
   // Ajustes y gestión de materias

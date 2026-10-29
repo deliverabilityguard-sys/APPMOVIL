@@ -71,6 +71,26 @@
         </div>
       </div>
 
+      <!-- Widget: 📅 Clases y Pendientes de Hoy -->
+      <div class="glass-card" id="dashboard-today-events-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div>
+            <h2 style="font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+              <span>📅</span> Clases y Pendientes de Hoy
+            </h2>
+            <span id="dashboard-today-date-badge" style="font-size: 0.76rem; color: var(--text-muted); font-weight: 600;"></span>
+          </div>
+          <button id="btn-dashboard-add-event" class="btn-primary" style="padding: 6px 12px; font-size: 0.78rem;">
+            + Programar
+          </button>
+        </div>
+
+        <!-- Lista de actividades del día -->
+        <div id="dashboard-today-events-list">
+          <!-- Renderizado dinámicamente -->
+        </div>
+      </div>
+
       <!-- Acceso Rápido a Tareas -->
       <div class="glass-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -356,6 +376,63 @@
 
   </main>
 
+  <!-- Modal: Programar Actividad / Clase / Pendiente -->
+  <div id="modal-schedule-event" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>📅 Programar Actividad</h3>
+        <button id="btn-close-schedule-modal" class="modal-close" aria-label="Cerrar">✕</button>
+      </div>
+      <form id="form-schedule-event">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;">Título de la actividad *</label>
+          <input type="text" id="schedule-event-title" class="input-field" placeholder="Ej. Clase de Algoritmos, Entrega de Tarea..." required style="width: 100%;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label style="display: block; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;">Materia</label>
+            <select id="schedule-event-subject" class="input-field" style="width: 100%;">
+              <option value="General">📚 General</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="display: block; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;">Tipo</label>
+            <select id="schedule-event-type" class="input-field" style="width: 100%;">
+              <option value="class">📚 Clase</option>
+              <option value="task">📝 Tarea</option>
+              <option value="exam">🚨 Examen</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div class="form-group">
+            <label style="display: block; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;">Fecha</label>
+            <input type="date" id="schedule-event-date" class="input-field" required style="width: 100%;">
+          </div>
+          <div class="form-group">
+            <label style="display: block; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;">Hora</label>
+            <input type="time" id="schedule-event-time" class="input-field" value="08:00" required style="width: 100%;">
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+          <input type="checkbox" id="schedule-event-reminder" checked style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+          <label for="schedule-event-reminder" style="font-size: 0.84rem; color: #f8fafc; cursor: pointer;">
+            🔔 Activar recordatorio visual
+          </label>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="submit" class="btn-primary" style="flex: 1; padding: 12px; justify-content: center; font-size: 0.95rem;">
+            Guardar Actividad
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Bottom Navigation Bar (Estilo Nativo Mobile) -->
   <nav class="bottom-nav">
     <button class="nav-item active" data-tab="dashboard">
@@ -387,9 +464,10 @@
   <!-- Scripts -->
   <script src="./js/storage.js"></script>
   <script src="./js/pomodoro.js"></script>
-  <script src="./js/flashcards.js?v=16"></script>
+  <script src="./js/flashcards.js?v=20"></script>
   <script src="./js/tasks.js"></script>
-  <script src="./js/notes.js?v=11"></script>
-  <script src="./js/app.js?v=11"></script>
+  <script src="./js/calendar.js?v=20"></script>
+  <script src="./js/notes.js?v=20"></script>
+  <script src="./js/app.js?v=20"></script>
 </body>
 </html>
