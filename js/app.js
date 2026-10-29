@@ -28,12 +28,22 @@ class App {
   setupPWA() {
     const installBtn = document.getElementById('btn-install-pwa');
 
-    // Registro del Service Worker
+    // Registro del Service Worker con auto-recarga al actualizar
     if ('serviceWorker' in navigator) {
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          console.log('[PWA] Nueva versión activada. Recargando página...');
+          window.location.reload();
+        }
+      });
+
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
           .then((registration) => {
             console.log('[PWA] Service Worker registrado exitosamente en el scope:', registration.scope);
+            registration.update();
           })
           .catch((error) => {
             console.error('[PWA] Error registrando Service Worker:', error);

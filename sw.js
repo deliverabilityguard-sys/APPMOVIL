@@ -1,4 +1,4 @@
-const CACHE_NAME = 'estudio-pwa-v4';
+const CACHE_NAME = 'appestudio-v7';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -19,67 +19,66 @@ const ASSETS_TO_CACHE = [
   'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js'
 ];
 
-// Instalación: precachear shell y librerías clave
+// Instalación inmediata (skipWaiting forzado)
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Precaching archivos de la app y librerías CDN');
+      console.log('[Service Worker] Forzando precache v7...');
       return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
-// Activación: purgar cachés obsoletas
+// Activación y purga agresiva de cachés antiguas
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('[Service Worker] Borrando caché antigua:', cache);
+            console.log('[Service Worker] Purgando caché obsoleta:', cache);
             return caches.delete(cache);
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      console.log('[Service Worker] v7 activo y tomando control');
+      return self.clients.claim();
+    })
   );
 });
 
-// Intercepción de peticiones
+// Intercepción de red
 self.addEventListener('fetch', (event) => {
-  // 1. Evitar llamadas no GET
   if (event.request.method !== 'GET') return;
 
-  // 2. NO interceptar llamadas a la API de Gemini
+  // NO interceptar ni cachear la API de Gemini
   if (event.request.url.includes('generativelanguage.googleapis.com')) {
     return;
   }
 
-  // 3. Estrategia Cache-First con Stale-While-Revalidate
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Actualizar en segundo plano si hay conexión
+        // Actualizar en segundo plano si hay internet
         fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, networkResponse);
             });
           }
-        }).catch(() => {
-          // Modo offline silencioso
-        });
+        }).catch(() => {});
         return cachedResponse;
       }
 
-      // Si no está en caché, buscar en red y guardar si es válida (soporta básicas y CORS de CDN)
       return fetch(event.request).then((networkResponse) => {
         if (!networkResponse || networkResponse.status !== 200) {
           return networkResponse;
         }
 
-        const isCacheableType = networkResponse.type === 'basic' || networkResponse.type === 'cors';
-        if (isCacheableType) {
+        const isCacheable = networkResponse.type === 'basic' || networkResponse.type === 'cors';
+        if (isCacheable) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
@@ -88,7 +87,6 @@ self.addEventListener('fetch', (event) => {
 
         return networkResponse;
       }).catch(() => {
-        // Fallback para navegación de documentos HTML
         if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
           return caches.match('./index.html');
         }
