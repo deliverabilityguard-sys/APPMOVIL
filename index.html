@@ -271,9 +271,14 @@
       <div id="fc-viewer-container" style="display: none;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin: 14px 4px 10px 4px;">
           <span id="fc-counter" style="font-size: 0.88rem; color: var(--text-secondary); font-weight: 700;">1 / 10</span>
-          <button id="btn-clear-deck" style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.3); color: #fb7185; font-size: 0.78rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-            🗑️ Borrar Baraja
-          </button>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button id="btn-delete-card" style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.78rem; font-weight: 600; padding: 5px 11px; border-radius: 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Eliminar esta tarjeta">
+              🗑️ Borrar
+            </button>
+            <button id="btn-clear-deck" style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.3); color: #fb7185; font-size: 0.78rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+              Vaciar Baraja
+            </button>
+          </div>
         </div>
 
         <!-- Tarjeta 3D Volteable Limpia -->
@@ -549,7 +554,7 @@
   <!-- Scripts -->
   <script src="./js/storage.js"></script>
   <script src="./js/pomodoro.js"></script>
-  <script src="./js/flashcards.js?v=24"></script>
+  <script src="./js/flashcards.js?v=22"></script>
   <script src="./js/tasks.js"></script>
   <script src="./js/calendar.js?v=24"></script>
   <script src="./js/notes.js?v=24"></script>

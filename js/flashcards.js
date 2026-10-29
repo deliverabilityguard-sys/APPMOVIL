@@ -1,10 +1,11 @@
 // ==========================================================================
 // MÓDULO EXCLUSIVO: FLASHCARDS CON GENERADOR AUTOMÁTICO DE IA (PDF + GEMINI)
+// Persistencia blindada en localStorage ('appestudio_saved_flashcards')
 // ==========================================================================
 
 // Clave API de Gemini fija en el código
 const GEMINI_API_KEY = "AQ" + ".Ab8RN6K96o_9-AjlAR7ZIpZCHgpvXVPw8QYqUqU0YIfE-Q4Ayg";
-const FLASHCARDS_STORAGE_KEY = 'flashcards_data';
+const FLASHCARDS_STORAGE_KEY = 'appestudio_saved_flashcards';
 
 class FlashcardsController {
   constructor() {
@@ -30,6 +31,7 @@ class FlashcardsController {
       questionText: document.getElementById('fc-question'),
       answerText: document.getElementById('fc-answer'),
       counterText: document.getElementById('fc-counter'),
+      btnDeleteCard: document.getElementById('btn-delete-card'),
       btnClearDeck: document.getElementById('btn-clear-deck'),
       gradeButtons: document.querySelectorAll('.grade-btn')
     };
@@ -38,37 +40,73 @@ class FlashcardsController {
   }
 
   init() {
-    this.loadCards();
+    this.loadFlashcardsFromStorage();
     this.attachEvents();
   }
 
-  loadCards() {
+  // Carga automática e inmediata desde localStorage
+  loadFlashcardsFromStorage() {
     try {
-      const raw = localStorage.getItem(FLASHCARDS_STORAGE_KEY);
-      this.cards = raw ? JSON.parse(raw) : [];
+      let stored = localStorage.getItem(FLASHCARDS_STORAGE_KEY);
+      // Fallback a claves anteriores si la clave principal aún no existe
+      if (!stored) {
+        stored = localStorage.getItem('flashcards_data') || localStorage.getItem('estudio_flashcards_v1');
+        if (stored) {
+          localStorage.setItem(FLASHCARDS_STORAGE_KEY, stored);
+        }
+      }
+
+      if (stored) {
+        this.cards = JSON.parse(stored);
+      } else {
+        this.cards = [];
+      }
     } catch (e) {
+      console.error("Error al parsear tarjetas guardadas:", e);
       this.cards = [];
     }
     this.currentIndex = 0;
-    this.render();
+    this.renderCurrentCard();
   }
 
-  renderDeckChips() {
-    // Compatibilidad
+  // Alias para compatibilidad externa
+  loadCards() {
+    this.loadFlashcardsFromStorage();
   }
 
-  saveCards(cards) {
-    this.cards = cards;
-    localStorage.setItem(FLASHCARDS_STORAGE_KEY, JSON.stringify(cards));
-    if (window.appStorage) {
-      window.appStorage.save('estudio_flashcards_v1', cards);
+  // Guardado persistente inmediato
+  saveFlashcardsToStorage(cards) {
+    this.cards = Array.isArray(cards) ? cards : [];
+    try {
+      localStorage.setItem(FLASHCARDS_STORAGE_KEY, JSON.stringify(this.cards));
+      if (window.appStorage) {
+        window.appStorage.save('estudio_flashcards_v1', this.cards);
+      }
+    } catch (e) {
+      console.error("Error al guardar tarjetas en localStorage:", e);
     }
-    this.render();
+    this.renderCurrentCard();
   }
 
+  // Alias para compatibilidad
+  saveCards(cards) {
+    this.saveFlashcardsToStorage(cards);
+  }
+
+  // Eliminar la tarjeta visible actualmente (botón papelera)
+  deleteCurrentCard() {
+    if (!this.cards || this.cards.length === 0) return;
+    this.cards.splice(this.currentIndex, 1);
+    if (this.currentIndex >= this.cards.length) {
+      this.currentIndex = Math.max(0, this.cards.length - 1);
+    }
+    this.saveFlashcardsToStorage(this.cards);
+  }
+
+  // Vaciar toda la baraja con confirmación previa
   clearDeck() {
-    if (confirm('¿Estás seguro de que deseas vaciar la baraja actual para estudiar un nuevo tema?')) {
-      this.saveCards([]);
+    if (confirm('¿Estás seguro de que deseas vaciar toda la baraja de tarjetas? Esta acción no se puede deshacer.')) {
+      this.saveFlashcardsToStorage([]);
       if (this.dom.fileStatusText) {
         this.dom.fileStatusText.textContent = 'Genera tarjetas de estudio automáticas desde tus lecturas';
         this.dom.fileStatusText.style.color = 'var(--text-muted)';
@@ -81,7 +119,8 @@ class FlashcardsController {
     }
   }
 
-  render() {
+  // Renderizar la tarjeta activa o el estado vacío
+  renderCurrentCard() {
     const hasCards = Array.isArray(this.cards) && this.cards.length > 0;
 
     if (!hasCards) {
@@ -94,6 +133,15 @@ class FlashcardsController {
     if (this.dom.viewerContainer) this.dom.viewerContainer.style.display = 'block';
 
     this.showCard(this.currentIndex);
+  }
+
+  // Alias para compatibilidad
+  render() {
+    this.renderCurrentCard();
+  }
+
+  renderDeckChips() {
+    // Compatibilidad
   }
 
   showCard(index) {
@@ -139,9 +187,18 @@ class FlashcardsController {
       });
     });
 
-    // 3. Botón para borrar/reiniciar baraja
+    // 3. Botón para eliminar tarjeta individual
+    if (this.dom.btnDeleteCard) {
+      this.dom.btnDeleteCard.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.deleteCurrentCard();
+      });
+    }
+
+    // 4. Botón para borrar/vaciar toda la baraja con confirmación
     if (this.dom.btnClearDeck) {
-      this.dom.btnClearDeck.addEventListener('click', () => {
+      this.dom.btnClearDeck.addEventListener('click', (e) => {
+        e.stopPropagation();
         this.clearDeck();
       });
     }
@@ -343,10 +400,10 @@ ${cleanText}
         throw new Error('Las tarjetas devueltas no tienen el formato requerido.');
       }
 
-      // Guardar reemplazando la baraja por la nueva
-      this.saveCards(validCards);
+      // Guardar de forma permanente y blindada en 'appestudio_saved_flashcards'
+      this.saveFlashcardsToStorage(validCards);
       this.currentIndex = 0;
-      this.showCard(0);
+      this.renderCurrentCard();
 
       if (window.appInstance) {
         window.appInstance.renderDashboard();
@@ -388,6 +445,21 @@ ${cleanText}
     if (this.dom.errorMessage) {
       this.dom.errorMessage.textContent = '';
       this.dom.errorMessage.style.display = 'none';
+    }
+  }
+}
+
+// Inicialización automática e inmediata en DOMContentLoaded
+if (typeof window !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!window.flashcardsCtrl) {
+        window.flashcardsCtrl = new FlashcardsController();
+      }
+    });
+  } else {
+    if (!window.flashcardsCtrl) {
+      window.flashcardsCtrl = new FlashcardsController();
     }
   }
 }
