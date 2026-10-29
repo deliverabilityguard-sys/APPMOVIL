@@ -1,4 +1,4 @@
-const CACHE_NAME = 'supervivencia-v26';
+const CACHE_NAME = 'supervivencia-v27';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -19,7 +19,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Instalando versión supervivencia-v26...');
+      console.log('[Service Worker] Instalando versión supervivencia-v27...');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
@@ -38,7 +38,7 @@ self.addEventListener('activate', (event) => {
         })
       );
     }).then(() => {
-      console.log('[Service Worker] supervivencia-v26 activo y tomando control');
+      console.log('[Service Worker] supervivencia-v27 activo y tomando control');
       return self.clients.claim();
     })
   );

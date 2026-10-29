@@ -1,6 +1,6 @@
 // ==========================================================================
-// MÓDULO 2: "CHEF FORÁNEO" — GENERADOR DE RECETAS CON IA
-// Conexión directa ultrarrápida a Google Gemini API
+// MÓDULO 2: "CHEF FORÁNEO" — GENERADOR DE RECETAS & ESCÁNER DE DESPENSA CON IA
+// Conexión directa ultrarrápida a Google Gemini API (Multimodal Vision + Text)
 // Persistencia de favoritas en localStorage ('saved_recipes')
 // ==========================================================================
 
@@ -11,6 +11,9 @@ class ChefForaneo {
   constructor() {
     this.selectedIngredients = new Set(['Arroz', 'Huevos', 'Tomate']);
     this.currentRecipe = null;
+    this.mediaStream = null;
+    this.cameraFacing = 'environment'; // Cámara trasera por defecto en móviles
+
     this.attachEvents();
     this.renderSelectedCount();
     this.renderSavedRecipes();
@@ -31,13 +34,320 @@ class ChefForaneo {
     const count = this.selectedIngredients.size;
 
     if (elCount) {
-      elCount.textContent = `${count} ingrediente${count === 1 ? '' : 's'} seleccionado${count === 1 ? '' : 's'}`;
+      elCount.textContent = `${count} seleccionado${count === 1 ? '' : 's'}`;
     }
 
     if (btnGenerate) {
       btnGenerate.disabled = count === 0;
     }
   }
+
+  // ========================================================================
+  // ESCÁNER DE DESPENSA / NEVERA — VISIÓN MULTIMODAL GEMINI
+  // ========================================================================
+
+  async openScanner() {
+    const modal = document.getElementById('modal-fridge-scanner');
+    if (!modal) return;
+    modal.classList.add('open');
+    await this.startCamera();
+  }
+
+  closeScanner() {
+    this.stopCamera();
+    const modal = document.getElementById('modal-fridge-scanner');
+    const overlay = document.getElementById('scanner-processing-overlay');
+    if (modal) modal.classList.remove('open');
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  async startCamera() {
+    this.stopCamera();
+    const video = document.getElementById('scanner-video');
+    if (!video) return;
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.warn('[Escáner] getUserMedia no soportado, activando selector nativo.');
+      return;
+    }
+
+    try {
+      const constraints = {
+        video: {
+          facingMode: { ideal: this.cameraFacing },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      };
+      this.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = this.mediaStream;
+      await video.play();
+    } catch (err) {
+      console.warn('[Escáner] No se pudo acceder a la cámara continua:', err);
+      // Fallback amigable: permitir tomar foto nativa con el input
+    }
+  }
+
+  stopCamera() {
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach(track => track.stop());
+      this.mediaStream = null;
+    }
+    const video = document.getElementById('scanner-video');
+    if (video) video.srcObject = null;
+  }
+
+  async switchCamera() {
+    this.cameraFacing = this.cameraFacing === 'environment' ? 'user' : 'environment';
+    await this.startCamera();
+  }
+
+  // Capturar fotograma actual del <video> y procesar con IA
+  captureFrameFromVideo() {
+    const video = document.getElementById('scanner-video');
+    const canvas = document.getElementById('scanner-canvas');
+
+    if (!video || !canvas || !video.videoWidth) {
+      // Si la cámara en vivo no está activa, abrir el input de captura nativa
+      const inputFallback = document.getElementById('scanner-file-fallback');
+      if (inputFallback) inputFallback.click();
+      return;
+    }
+
+    // Redimensionar respetando aspecto (máx. 1024px para compresión ultrarrápida en móviles)
+    const maxDimension = 1024;
+    let width = video.videoWidth;
+    let height = video.videoHeight;
+
+    if (width > maxDimension || height > maxDimension) {
+      if (width > height) {
+        height = Math.round((height * maxDimension) / width);
+        width = maxDimension;
+      } else {
+        width = Math.round((width * maxDimension) / height);
+        height = maxDimension;
+      }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, width, height);
+
+    // Obtener Base64 JPEG comprimido (calidad 0.8)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    const base64Data = dataUrl.split(',')[1];
+
+    if (base64Data) {
+      this.analyzeFridgeImageWithAI(base64Data);
+    }
+  }
+
+  // Procesar imagen subida desde galería o cámara nativa
+  processUploadedImageFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.getElementById('scanner-canvas') || document.createElement('canvas');
+        const maxDimension = 1024;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        const base64Data = dataUrl.split(',')[1];
+        if (base64Data) {
+          this.analyzeFridgeImageWithAI(base64Data);
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Llamada a la API de Visión Multimodal de Gemini
+  async analyzeFridgeImageWithAI(base64JpegData) {
+    const processingOverlay = document.getElementById('scanner-processing-overlay');
+    if (processingOverlay) processingOverlay.style.display = 'flex';
+
+    try {
+      const promptText = `
+Analiza esta imagen de una nevera/alacena e identifica todos los ingredientes y alimentos visibles que puedan servir para cocinar. Devuelve únicamente un arreglo JSON de strings con los nombres de los ingredientes en español, sin preámbulos ni markdown: ["huevos", "tomate", "cebolla", "leche", ...]. Sé preciso, solo incluye lo que realmente se observe con alta probabilidad.
+      `.trim();
+
+      const requestPayload = {
+        contents: [
+          {
+            parts: [
+              { text: promptText },
+              {
+                inlineData: {
+                  mimeType: "image/jpeg",
+                  data: base64JpegData
+                }
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 600,
+          responseMimeType: "application/json"
+        }
+      };
+
+      const primaryUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+
+      let response;
+      try {
+        response = await fetch(primaryUrl, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestPayload)
+        });
+
+        if (!response.ok && response.status === 404) {
+          response = await fetch(fallbackUrl, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestPayload)
+          });
+        }
+      } catch (fetchErr) {
+        throw new Error('Error al conectar con la IA de Google. Verifica tu conexión de red.');
+      }
+
+      if (!response.ok) {
+        throw new Error(`Error en el servicio de visión (${response.status})`);
+      }
+
+      const data = await response.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) throw new Error('No se detectaron alimentos claros en la foto.');
+
+      let detectedIngredients = [];
+      try {
+        detectedIngredients = JSON.parse(rawText);
+      } catch (e) {
+        const match = rawText.match(/\[[\s\S]*\]/);
+        if (match) detectedIngredients = JSON.parse(match[0]);
+        else throw new Error('Formato de respuesta no reconocido.');
+      }
+
+      if (!Array.isArray(detectedIngredients) || detectedIngredients.length === 0) {
+        throw new Error('No se lograron identificar ingredientes claros. Intenta con más iluminación.');
+      }
+
+      // Procesar e integrar ingredientes a la despensa del usuario
+      this.applyDetectedIngredients(detectedIngredients);
+
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'No se pudieron detectar ingredientes. Intenta con otra foto.');
+    } finally {
+      if (processingOverlay) processingOverlay.style.display = 'none';
+      this.closeScanner();
+    }
+  }
+
+  // Aplicar los ingredientes detectados a la interfaz
+  applyDetectedIngredients(items) {
+    const grid = document.querySelector('.ingredient-chips-grid');
+    const btnAddCustom = document.getElementById('btn-add-custom-ingredient');
+    const newlyAdded = [];
+
+    items.forEach(rawItem => {
+      if (typeof rawItem !== 'string') return;
+      const cleanName = rawItem.trim().charAt(0).toUpperCase() + rawItem.trim().slice(1).toLowerCase();
+      if (!cleanName) return;
+
+      // Buscar si el chip ya existe en la cuadrícula
+      const existingChip = Array.from(document.querySelectorAll('.chip-ingredient[data-ingredient]')).find(
+        btn => (btn.dataset.ingredient || '').toLowerCase() === cleanName.toLowerCase()
+      );
+
+      if (existingChip) {
+        const standardName = existingChip.dataset.ingredient;
+        this.selectedIngredients.add(standardName);
+        existingChip.classList.add('active');
+        newlyAdded.push(standardName);
+      } else {
+        // Si no existe, crearlo dinámicamente
+        this.selectedIngredients.add(cleanName);
+        newlyAdded.push(cleanName);
+
+        if (grid && btnAddCustom) {
+          const newChip = document.createElement('button');
+          newChip.type = 'button';
+          newChip.className = 'chip-ingredient active';
+          newChip.dataset.ingredient = cleanName;
+          newChip.innerHTML = `<span>✨</span> ${this.escapeHtml(cleanName)}`;
+          newChip.addEventListener('click', () => {
+            this.toggleIngredient(cleanName);
+            newChip.classList.toggle('active', this.selectedIngredients.has(cleanName));
+          });
+          grid.insertBefore(newChip, btnAddCustom);
+        }
+      }
+    });
+
+    this.renderSelectedCount();
+
+    // Notificación Toast visual
+    if (newlyAdded.length > 0) {
+      const topItems = newlyAdded.slice(0, 4).join(', ');
+      this.showToastNotification(`¡Detectamos: ${topItems}! (${newlyAdded.length} ingredientes listos)`);
+    }
+
+    // Scroll suave hacia la acción de crear receta
+    const btnGenerate = document.getElementById('btn-generate-recipe');
+    if (btnGenerate) {
+      btnGenerate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  showToastNotification(message) {
+    const existing = document.querySelector('.toast-scanner-notify');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'toast-scanner-notify';
+    toast.innerHTML = `<span>📸</span> <span>${this.escapeHtml(message)}</span>`;
+    document.body.appendChild(toast);
+
+    if ('vibrate' in navigator) navigator.vibrate([30, 50, 30]);
+
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.4s, transform 0.4s';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translate(-50%, -10px)';
+      setTimeout(() => toast.remove(), 400);
+    }, 4500);
+  }
+
+  // ========================================================================
+  // GENERACIÓN DE RECETA CON IA (GEMINI TEXT)
+  // ========================================================================
 
   async generateRecipeWithAI() {
     const ingredientsArray = Array.from(this.selectedIngredients);
@@ -54,7 +364,7 @@ class ChefForaneo {
     try {
       if (btnGenerate) btnGenerate.disabled = true;
       if (elStatus) elStatus.style.display = 'flex';
-      if (elStatusText) elStatusText.textContent = `Creando receta con ${ingredientsArray.join(', ')}...`;
+      if (elStatusText) elStatusText.textContent = `Creando receta económica con ${ingredientsArray.slice(0, 4).join(', ')}...`;
       if (elResultContainer) elResultContainer.style.display = 'none';
 
       const promptText = `
@@ -222,7 +532,6 @@ Responde ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
 
   saveRecipeToStorage(recipe) {
     let saved = this.getSavedRecipes();
-    // Evitar duplicados por título
     if (!saved.some(r => r.titulo === recipe.titulo)) {
       saved.unshift(recipe);
       localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(saved));
@@ -288,7 +597,7 @@ Responde ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
   }
 
   attachEvents() {
-    // Chips de ingredientes existentes
+    // 1. Chips de ingredientes existentes
     document.querySelectorAll('.chip-ingredient[data-ingredient]').forEach(chip => {
       chip.addEventListener('click', () => {
         const name = chip.dataset.ingredient;
@@ -297,7 +606,7 @@ Responde ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
       });
     });
 
-    // Botón Agregar otro ingrediente personalizado
+    // 2. Botón Agregar otro ingrediente personalizado manual
     const btnAddCustom = document.getElementById('btn-add-custom-ingredient');
     if (btnAddCustom) {
       btnAddCustom.addEventListener('click', () => {
@@ -306,7 +615,6 @@ Responde ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
           const cleanName = newIng.trim();
           this.selectedIngredients.add(cleanName);
           
-          // Crear chip en el contenedor
           const grid = document.querySelector('.ingredient-chips-grid');
           if (grid) {
             const newChip = document.createElement('button');
@@ -325,7 +633,72 @@ Responde ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
       });
     }
 
-    // Botón principal de generar receta
+    // 3. Botón de Apertura del Escáner HUD
+    const btnOpenScanner = document.getElementById('btn-open-scanner');
+    if (btnOpenScanner) {
+      btnOpenScanner.addEventListener('click', () => {
+        this.openScanner();
+      });
+    }
+
+    // 4. Botón Cerrar Escáner
+    const btnCloseScanner = document.getElementById('btn-close-scanner');
+    if (btnCloseScanner) {
+      btnCloseScanner.addEventListener('click', () => {
+        this.closeScanner();
+      });
+    }
+
+    // 5. Botón Alternar Cámara (trasera / frontal)
+    const btnSwitchCam = document.getElementById('btn-switch-camera');
+    if (btnSwitchCam) {
+      btnSwitchCam.addEventListener('click', () => {
+        this.switchCamera();
+      });
+    }
+
+    // 6. Botón Obturador (Captura fotograma y analiza)
+    const btnShutter = document.getElementById('btn-shutter-capture');
+    if (btnShutter) {
+      btnShutter.addEventListener('click', () => {
+        this.captureFrameFromVideo();
+      });
+    }
+
+    // 7. Botón Galería
+    const btnGallery = document.getElementById('btn-upload-gallery');
+    const inputFallback = document.getElementById('scanner-file-fallback');
+    if (btnGallery && inputFallback) {
+      btnGallery.addEventListener('click', () => {
+        inputFallback.removeAttribute('capture');
+        inputFallback.click();
+      });
+    }
+
+    // 8. Botón Cámara Nativa directa
+    const btnNativeCam = document.getElementById('btn-native-cam');
+    if (btnNativeCam && inputFallback) {
+      btnNativeCam.addEventListener('click', () => {
+        inputFallback.setAttribute('capture', 'environment');
+        inputFallback.click();
+      });
+    }
+
+    // 9. Listener al seleccionar archivo de imagen en input
+    if (inputFallback) {
+      inputFallback.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          const file = e.target.files[0];
+          const modal = document.getElementById('modal-fridge-scanner');
+          if (modal && !modal.classList.contains('open')) {
+            modal.classList.add('open');
+          }
+          this.processUploadedImageFile(file);
+        }
+      });
+    }
+
+    // 10. Botón principal de generar receta
     const btnGenerate = document.getElementById('btn-generate-recipe');
     if (btnGenerate) {
       btnGenerate.addEventListener('click', () => {

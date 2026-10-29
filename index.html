@@ -217,9 +217,26 @@
             ⚡ Gemini Flash IA
           </span>
         </div>
-        <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 16px;">
-          Cocina rico con lo que hay en la despensa. Selecciona tus ingredientes:
+        <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 12px;">
+          Cocina rico con lo que hay en la despensa o escanea tu nevera:
         </p>
+
+        <!-- Botón de Escáner de Despensa / Nevera con IA -->
+        <button id="btn-open-scanner" type="button" class="btn-scanner-trigger">
+          <span class="scanner-btn-icon">📸</span>
+          <div style="text-align: left;">
+            <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">Escanear Nevera / Despensa</div>
+            <div style="font-size: 0.74rem; color: #a7f3d0;">Detecta ingredientes con foto e IA en 3 segundos</div>
+          </div>
+          <span style="margin-left: auto; font-size: 1.1rem; color: var(--primary); font-weight: 800;">➔</span>
+        </button>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 14px 0 10px 0;">
+          <span style="font-size: 0.84rem; font-weight: 800; color: var(--text-white);">¿Qué tienes a mano?</span>
+          <span id="chef-selected-count" style="font-size: 0.74rem; font-weight: 700; color: var(--primary);">
+            3 seleccionados
+          </span>
+        </div>
 
         <!-- Chips interactivos de ingredientes -->
         <div class="ingredient-chips-grid">
@@ -525,6 +542,73 @@
     </div>
   </div>
 
+  <!-- Modal 5 / HUD Pantalla Completa: Escáner de Nevera / Despensa con IA -->
+  <div id="modal-fridge-scanner" class="scanner-hud-overlay">
+    <!-- Barra superior HUD -->
+    <div class="scanner-hud-header">
+      <button id="btn-close-scanner" class="scanner-hud-back-btn" type="button">
+        ✕ Volver
+      </button>
+      <div class="scanner-hud-title">
+        <span class="hud-dot"></span> ESCÁNER IA
+      </div>
+      <button id="btn-switch-camera" class="scanner-hud-action-btn" type="button" title="Cambiar cámara">
+        🔄
+      </button>
+    </div>
+
+    <!-- Viewport del Escáner con HUD y Láser -->
+    <div class="scanner-viewport">
+      <video id="scanner-video" playsinline autoplay muted class="scanner-video-feed"></video>
+      <canvas id="scanner-canvas" style="display: none;"></canvas>
+      
+      <!-- Fallback / Input de archivo oculto -->
+      <input type="file" id="scanner-file-fallback" accept="image/*" capture="environment" style="display: none;">
+
+      <!-- Marco Cyberpunk de enfoque -->
+      <div class="scanner-reticle">
+        <div class="reticle-corner top-left"></div>
+        <div class="reticle-corner top-right"></div>
+        <div class="reticle-corner bottom-left"></div>
+        <div class="reticle-corner bottom-right"></div>
+        
+        <!-- Línea láser animada de barrido neón -->
+        <div class="scanner-laser-line"></div>
+      </div>
+
+      <!-- Overlay de carga al procesar foto con IA -->
+      <div id="scanner-processing-overlay" class="scanner-processing-box" style="display: none;">
+        <div class="spinner-ring" style="width: 36px; height: 36px; border-width: 4px;"></div>
+        <div style="font-weight: 800; font-size: 1rem; color: #fff; margin-top: 12px;">Identificando alimentos...</div>
+        <div style="font-size: 0.78rem; color: #a7f3d0; margin-top: 4px;">Visión computacional con Gemini 1.5 Flash</div>
+      </div>
+    </div>
+
+    <!-- Panel inferior HUD y Controles de Captura -->
+    <div class="scanner-hud-footer">
+      <div class="scanner-hint-pill">
+        Apunta a tu nevera o despensa. Intenta que se vea claro y con buena luz.
+      </div>
+
+      <div class="scanner-controls-row">
+        <!-- Subir desde galería -->
+        <button id="btn-upload-gallery" type="button" class="scanner-sub-btn" title="Subir desde galería">
+          <span>🖼️</span> Galería
+        </button>
+
+        <!-- Botón de Obturador Circular Grande -->
+        <button id="btn-shutter-capture" type="button" class="scanner-shutter-btn" title="Capturar y escanear">
+          <div class="shutter-inner-circle"></div>
+        </button>
+
+        <!-- Disparador con cámara nativa directa si video no abre -->
+        <button id="btn-native-cam" type="button" class="scanner-sub-btn" title="Cámara nativa">
+          <span>📷</span> Foto
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ========================================================================
        BARRA DE NAVEGACIÓN INFERIOR (BOTTOM NAV — 4 PESTAÑAS)
        [💰 Mi Plata] [🍳 Chef Foráneo] [💡 Hacks] [📅 Pagos]
@@ -549,12 +633,12 @@
   </nav>
 
   <!-- ========================================================================
-       SCRIPTS MODULARES (V26)
+       SCRIPTS MODULARES (V27)
        ======================================================================== -->
-  <script src="./js/budget.js?v=26"></script>
-  <script src="./js/chef.js?v=26"></script>
-  <script src="./js/hacks.js?v=26"></script>
-  <script src="./js/bills.js?v=26"></script>
-  <script src="./js/app.js?v=26"></script>
+  <script src="./js/budget.js?v=27"></script>
+  <script src="./js/chef.js?v=27"></script>
+  <script src="./js/hacks.js?v=27"></script>
+  <script src="./js/bills.js?v=27"></script>
+  <script src="./js/app.js?v=27"></script>
 </body>
 </html>
