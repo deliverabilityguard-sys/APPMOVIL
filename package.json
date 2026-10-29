@@ -1,0 +1,13 @@
+{
+  "name": "app-estudio-emile",
+  "version": "1.0.0",
+  "description": "Progressive Web App (PWA) de estudio con Pomodoro, Flashcards, Tareas y soporte 100% Offline.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["pwa", "study", "pomodoro", "flashcards", "offline-first"],
+  "author": "Emile",
+  "license": "MIT"
+}

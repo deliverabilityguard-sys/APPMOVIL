@@ -1,0 +1,56 @@
+{
+  "name": "App de Estudio Emile",
+  "short_name": "Estudio",
+  "description": "Tu asistente inteligente de estudio: Pomodoro, Flashcards, Tareas y Resúmenes 100% offline.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Pomodoro Timer",
+      "short_name": "Pomodoro",
+      "description": "Iniciar sesión de concentración",
+      "url": "./index.html#pomodoro",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Tarjetas Flashcards",
+      "short_name": "Tarjetas",
+      "description": "Repasar tarjetas de estudio",
+      "url": "./index.html#flashcards",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Tareas y Exámenes",
+      "short_name": "Tareas",
+      "description": "Ver tareas pendientes",
+      "url": "./index.html#tasks",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

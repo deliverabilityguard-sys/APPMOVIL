@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>App de Estudio Emile - PWA</title>
+
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0b0f19">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Estudio">
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+  <!-- Estilos principales -->
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+
+  <!-- Header Superior -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <img src="./icons/icon.svg" alt="Logo Estudio" class="brand-icon">
+      <h1 class="brand-title">Estudio PWA</h1>
+    </div>
+    <div class="header-actions">
+      <span class="offline-pill">● 100% Offline</span>
+      <button id="btn-install-pwa" class="install-btn">📲 Instalar App</button>
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main class="app-content">
+
+    <!-- 1. VISTA DASHBOARD / INICIO -->
+    <section id="view-dashboard" class="view-panel active">
+      <!-- Banner de Racha -->
+      <div class="glass-card streak-banner">
+        <div class="streak-info">
+          <h3>¡Enfoque Total!</h3>
+          <p>Tu progreso de estudio sincronizado localmente</p>
+        </div>
+        <div class="streak-badge">
+          <span>🔥</span>
+          <span>4</span>
+          <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">días</span>
+        </div>
+      </div>
+
+      <!-- Cuadrícula de Métricas -->
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div id="stat-minutes" class="stat-value">0</div>
+          <div class="stat-label">Minutos Hoy</div>
+        </div>
+        <div class="stat-item">
+          <div id="stat-pomodoros" class="stat-value">0</div>
+          <div class="stat-label">Pomodoros</div>
+        </div>
+        <div class="stat-item">
+          <div id="stat-tasks" class="stat-value">0</div>
+          <div class="stat-label">Tareas Listas</div>
+        </div>
+      </div>
+
+      <!-- Acceso Rápido a Tareas -->
+      <div class="glass-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h2 style="font-size: 1.1rem; font-weight: 700;">Próximas Tareas</h2>
+          <span id="stat-cards" style="font-size: 0.8rem; color: var(--primary); font-weight: 600;">Repasos listos</span>
+        </div>
+        <div id="dashboard-pending-tasks">
+          <!-- Renderizado dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Tarjeta explicativa PWA -->
+      <div class="glass-card" style="border-left: 4px solid var(--primary);">
+        <h3 style="font-size: 0.95rem; margin-bottom: 6px;">📱 Modo App Instalable</h3>
+        <p style="font-size: 0.83rem; color: var(--text-muted); line-height: 1.4;">
+          Esta aplicación funciona completamente sin internet gracias a su Service Worker integrado. Puedes agregarla a tu pantalla de inicio en Android o iOS para usarla como una aplicación nativa.
+        </p>
+      </div>
+    </section>
+
+    <!-- 2. VISTA POMODORO -->
+    <section id="view-pomodoro" class="view-panel">
+      <div class="glass-card pomodoro-card">
+        <!-- Selector de Modos -->
+        <div class="timer-modes">
+          <button class="timer-mode-btn active" data-mode="focus">Concentración</button>
+          <button class="timer-mode-btn" data-mode="shortBreak">Descanso Corto</button>
+          <button class="timer-mode-btn" data-mode="longBreak">Descanso Largo</button>
+        </div>
+
+        <!-- Reloj Circular -->
+        <div class="timer-circle-wrap">
+          <svg class="timer-svg" viewBox="0 0 250 250">
+            <defs>
+              <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#6366f1" />
+                <stop offset="100%" stop-color="#d946ef" />
+              </linearGradient>
+            </defs>
+            <circle class="timer-bg-ring" cx="125" cy="125" r="110" />
+            <circle id="timer-progress" class="timer-progress-ring" cx="125" cy="125" r="110" />
+          </svg>
+          <div class="timer-inner-content">
+            <div id="timer-time" class="timer-display">25:00</div>
+            <div class="timer-subject-pill">
+              <select id="timer-subject-select" style="background: transparent; border: none; color: #fff; font-weight: 600; cursor: pointer; outline: none;">
+                <!-- Dinámico -->
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de Control -->
+        <div class="timer-controls">
+          <button id="btn-timer-reset" class="btn-icon-round" title="Reiniciar">↺</button>
+          <button id="btn-timer-play" class="btn-play-hero" title="Iniciar">▶</button>
+          <button id="btn-timer-skip" class="btn-icon-round" title="Siguiente">⏭</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. VISTA FLASHCARDS -->
+    <section id="view-flashcards" class="view-panel">
+      <!-- Selector de Materias / Mazos -->
+      <div id="fc-deck-chips" class="deck-selector">
+        <!-- Rellenado dinámicamente -->
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0;">
+        <span id="fc-counter" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">1 / 4</span>
+        <button id="btn-open-card-modal" class="btn-primary" style="padding: 6px 14px; font-size: 0.82rem;">
+          + Nueva Tarjeta
+        </button>
+      </div>
+
+      <!-- Tarjeta 3D Volteable -->
+      <div class="flip-card-wrapper">
+        <div id="flashcard-flip" class="flip-card">
+          <!-- Frente -->
+          <div class="flip-face">
+            <div style="display: flex; justify-content: space-between;">
+              <span id="fc-subject-tag" class="card-hint">Materia</span>
+              <span class="card-hint">Toca para voltear 🔄</span>
+            </div>
+            <p id="fc-question" class="card-text">Pregunta</p>
+            <div style="font-size: 0.75rem; color: var(--text-sub); text-align: center;">Toca la tarjeta para ver la respuesta</div>
+          </div>
+          <!-- Dorso -->
+          <div class="flip-face flip-face-back">
+            <div style="display: flex; justify-content: space-between;">
+              <span class="card-hint" style="color: #a78bfa;">Respuesta</span>
+              <span class="card-hint">Toca para voltear 🔄</span>
+            </div>
+            <p id="fc-answer" class="card-text">Respuesta</p>
+            <div style="font-size: 0.75rem; color: #a78bfa; text-align: center;">¿Qué tan difícil fue?</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calificación de Repaso -->
+      <div class="card-action-bar">
+        <button class="grade-btn hard" data-grade="hard">😓 Difícil</button>
+        <button class="grade-btn good" data-grade="good">🤔 Bien</button>
+        <button class="grade-btn easy" data-grade="easy">⚡ Fácil</button>
+      </div>
+    </section>
+
+    <!-- 4. VISTA TAREAS -->
+    <section id="view-tasks" class="view-panel">
+      <!-- Formulario Agregar Tarea -->
+      <form id="form-add-task" class="task-input-bar">
+        <input id="input-task-title" type="text" class="input-field" placeholder="Nueva tarea o examen..." required>
+        <button type="submit" class="btn-primary">Agregar</button>
+      </form>
+
+      <!-- Opciones Rápidas de la Tarea -->
+      <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+        <select id="task-subject-select" class="input-field" style="padding: 6px 10px; font-size: 0.85rem;">
+          <!-- Dinámico -->
+        </select>
+        <select id="task-priority-select" class="input-field" style="padding: 6px 10px; font-size: 0.85rem; width: 120px;">
+          <option value="high">Prioridad Alta</option>
+          <option value="medium" selected>Media</option>
+          <option value="low">Baja</option>
+        </select>
+      </div>
+
+      <!-- Filtros de Tareas -->
+      <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+        <button class="deck-chip task-filter-btn active" data-filter="all">Todas</button>
+        <button class="deck-chip task-filter-btn" data-filter="pending">Pendientes</button>
+        <button class="deck-chip task-filter-btn" data-filter="completed">Completadas</button>
+      </div>
+
+      <!-- Lista de Tareas -->
+      <div id="task-list-items" class="task-list">
+        <!-- Renderizado dinámicamente -->
+      </div>
+    </section>
+
+    <!-- 5. VISTA AJUSTES / MATERIAS -->
+    <section id="view-settings" class="view-panel">
+      <!-- Gestión de Materias -->
+      <div class="glass-card">
+        <h3 style="font-size: 1.1rem; margin-bottom: 12px;">📚 Mis Materias</h3>
+        
+        <form id="form-add-subject" style="display: flex; gap: 8px; margin-bottom: 14px;">
+          <input id="new-sub-icon" type="text" class="input-field" placeholder="Ícono" value="📖" style="width: 60px; text-align: center;">
+          <input id="new-sub-name" type="text" class="input-field" placeholder="Nombre de materia..." required>
+          <button type="submit" class="btn-primary">+</button>
+        </form>
+
+        <div id="settings-subjects-list">
+          <!-- Renderizado dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Respaldo de Datos Offline -->
+      <div class="glass-card">
+        <h3 style="font-size: 1.1rem; margin-bottom: 8px;">💾 Copia de Seguridad Offline</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+          Todos tus datos se guardan de forma privada en el almacenamiento local de este dispositivo.
+        </p>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button id="btn-export-data" class="btn-primary" style="flex: 1; padding: 10px;">
+            📥 Descargar Respaldo JSON
+          </button>
+          <label class="btn-primary" style="flex: 1; padding: 10px; text-align: center; background: var(--bg-surface); border: 1px solid var(--border-color); cursor: pointer;">
+            📤 Restaurar Respaldo
+            <input type="file" id="input-import-data" accept=".json" style="display: none;">
+          </label>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: Crear Nueva Flashcard -->
+  <div id="modal-new-card" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Nueva Tarjeta de Estudio</h3>
+        <button id="btn-close-card-modal" class="modal-close">&times;</button>
+      </div>
+      <form id="form-new-card">
+        <div class="form-group">
+          <label>Materia</label>
+          <select id="new-card-subject" class="input-field" style="width: 100%;">
+            <!-- Dinámico -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Pregunta / Concepto (Frente)</label>
+          <textarea id="new-card-q" class="input-field" rows="3" style="width: 100%; resize: vertical;" placeholder="Ej: ¿Qué es el Teorema de Pitágoras?" required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Respuesta / Explicación (Dorso)</label>
+          <textarea id="new-card-a" class="input-field" rows="3" style="width: 100%; resize: vertical;" placeholder="Ej: En un triángulo rectángulo, a² + b² = c²." required></textarea>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; justify-content: center; margin-top: 10px;">
+          Guardar Tarjeta
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar (Estilo Nativo Mobile) -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="dashboard">
+      <span class="nav-icon">📊</span>
+      <span>Inicio</span>
+    </button>
+    <button class="nav-item" data-tab="pomodoro">
+      <span class="nav-icon">⏱️</span>
+      <span>Pomodoro</span>
+    </button>
+    <button class="nav-item" data-tab="flashcards">
+      <span class="nav-icon">🗂️</span>
+      <span>Tarjetas</span>
+    </button>
+    <button class="nav-item" data-tab="tasks">
+      <span class="nav-icon">📝</span>
+      <span>Tareas</span>
+    </button>
+    <button class="nav-item" data-tab="settings">
+      <span class="nav-icon">📚</span>
+      <span>Materias</span>
+    </button>
+  </nav>
+
+  <!-- Scripts -->
+  <script src="./js/storage.js"></script>
+  <script src="./js/pomodoro.js"></script>
+  <script src="./js/flashcards.js"></script>
+  <script src="./js/tasks.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>

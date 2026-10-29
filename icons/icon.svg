@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="50%" stop-color="#7c3aed" />
+      <stop offset="100%" stop-color="#9333ea" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.25" />
+    </filter>
+  </defs>
+  <!-- Background squircle -->
+  <rect x="24" y="24" width="464" height="464" rx="108" fill="url(#grad)" filter="url(#shadow)" />
+  
+  <!-- Graduation cap & book icon -->
+  <g transform="translate(100, 110) scale(0.61)" fill="#ffffff">
+    <!-- Graduation Cap -->
+    <path d="M 256,48 L 48,152 L 256,256 L 436,166 L 436,290 L 464,290 L 464,152 Z" />
+    <path d="M 120,224 L 120,320 C 120,380 392,380 392,320 L 392,224 L 256,292 Z" />
+    <!-- Tassel drop -->
+    <circle cx="450" cy="305" r="16" />
+    
+    <!-- Open Book / Study pages -->
+    <path d="M 40,430 C 130,400 200,410 246,450 C 292,410 362,400 452,430 L 452,480 C 362,450 292,460 256,496 C 220,460 150,450 40,480 Z" opacity="0.9" />
+  </g>
+</svg>
