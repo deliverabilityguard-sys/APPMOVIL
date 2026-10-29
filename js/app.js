@@ -17,9 +17,9 @@ class App {
       this.renderDashboard();
     });
 
-    // Leer hash inicial si existe (#pomodoro, #flashcards, #tasks)
+    // Leer hash inicial si existe (#pomodoro, #flashcards, #tasks, #notes)
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['dashboard', 'pomodoro', 'flashcards', 'tasks', 'settings'].includes(hash)) {
+    if (hash && ['dashboard', 'pomodoro', 'flashcards', 'tasks', 'notes', 'settings'].includes(hash)) {
       this.switchTab(hash);
     }
   }
@@ -110,6 +110,8 @@ class App {
       window.flashcardsCtrl.renderDeckChips();
     } else if (tabName === 'tasks' && window.tasksCtrl) {
       window.tasksCtrl.render();
+    } else if (tabName === 'notes' && window.notesCtrl) {
+      window.notesCtrl.renderHistory();
     }
   }
 
@@ -234,4 +236,5 @@ document.addEventListener('DOMContentLoaded', () => {
   window.pomodoroTimer = new PomodoroTimer();
   window.flashcardsCtrl = new FlashcardsController();
   window.tasksCtrl = new TasksController();
+  window.notesCtrl = new SmartNotesController();
 });

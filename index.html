@@ -17,6 +17,11 @@
 
   <!-- Estilos principales -->
   <link rel="stylesheet" href="./css/styles.css">
+
+  <!-- CDNs para Apuntes Inteligentes con IA (PDF.js, Marked.js, Mermaid.js) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
 
@@ -242,6 +247,101 @@
       </div>
     </section>
 
+    <!-- 6. VISTA APUNTES INTELIGENTES CON IA -->
+    <section id="view-notes" class="view-panel">
+      <!-- Card: Configuración de Gemini API Key -->
+      <div class="glass-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h2 style="font-size: 1.12rem; font-weight: 700;">🔑 Gemini API Key</h2>
+          <span id="api-key-status-badge" class="offline-pill" style="font-size: 0.7rem;">● Clave Requerida</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">
+          Procesamiento directo en tu dispositivo con <strong style="color:#38bdf8;">gemini-1.5-flash</strong>. Tu clave se almacena exclusivamente en tu navegador.
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color: #818cf8; text-decoration: none; font-weight: 600; margin-left: 4px;">Obtén una gratis aquí ↗</a>
+        </p>
+
+        <div style="display: flex; gap: 8px;">
+          <div style="position: relative; flex: 1;">
+            <input id="notes-api-key" type="password" class="input-field" placeholder="Pega tu clave (AIzaSy...)" style="width: 100%; padding-right: 44px;">
+            <button id="btn-toggle-key-visibility" type="button" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.7;">👁️</button>
+          </div>
+          <button id="btn-save-api-key" class="btn-primary" style="padding: 0 16px;">Guardar</button>
+        </div>
+      </div>
+
+      <!-- Card: Subida y Extracción de PDF -->
+      <div class="glass-card">
+        <h2 style="font-size: 1.12rem; font-weight: 700; margin-bottom: 12px;">📄 Cargar Documento PDF</h2>
+        
+        <input type="file" id="notes-pdf-file" accept="application/pdf" style="display: none;">
+        <div id="notes-pdf-dropzone" class="pdf-dropzone">
+          <span class="pdf-dropzone-icon">📥</span>
+          <div style="font-weight: 700; font-size: 1rem; color: #f8fafc; margin-bottom: 4px;">Toca para subir un PDF o arrástralo aquí</div>
+          <div style="font-size: 0.78rem; color: var(--text-muted);">Extracción 100% en el cliente vía PDF.js sin intermediarios</div>
+        </div>
+
+        <div id="notes-file-info" style="display: none; justify-content: space-between; align-items: center; background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 10px 14px; border-radius: var(--radius-md); margin-bottom: 14px;">
+          <span id="notes-file-name" style="font-size: 0.85rem; font-weight: 600; color: #38bdf8;">📄 documento.pdf</span>
+          <span style="font-size: 0.72rem; color: #34d399; font-weight: 600;">Listo</span>
+        </div>
+
+        <button id="btn-generate-notes" class="btn-primary" style="width: 100%; padding: 14px; justify-content: center; font-size: 0.98rem; opacity: 0.6;" disabled>
+          ⚡ Generar Apuntes y Mapa Mental con IA
+        </button>
+
+        <!-- Indicador de Progreso Dinámico -->
+        <div id="notes-status-container" class="status-loading-box" style="display: none;">
+          <div id="notes-status-spinner" class="spinner-dual-ring"></div>
+          <span id="notes-status-text" style="font-size: 0.88rem; font-weight: 600; color: #f8fafc;">Extrayendo PDF...</span>
+        </div>
+
+        <!-- Mensaje de Error -->
+        <div id="notes-error-message" class="error-alert-box"></div>
+      </div>
+
+      <!-- Card: Resultados (Markdown y Mapa Mental) -->
+      <div id="notes-results-card" class="glass-card" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+          <!-- Barra de Tabs -->
+          <div class="result-tabs-bar" style="margin-bottom: 0;">
+            <button id="tab-btn-markdown" class="tab-btn-notes active">📝 Apuntes</button>
+            <button id="tab-btn-mindmap" class="tab-btn-notes">🗺️ Mapa Mental</button>
+          </div>
+
+          <!-- Acciones de Descarga / Copia -->
+          <div style="display: flex; gap: 8px;">
+            <button id="btn-copy-markdown" class="btn-primary" style="padding: 6px 12px; font-size: 0.78rem; background: var(--bg-surface); border: 1px solid var(--border-subtle);">📋 Copiar</button>
+            <button id="btn-download-markdown" class="btn-primary" style="padding: 6px 12px; font-size: 0.78rem; background: var(--bg-surface); border: 1px solid var(--border-subtle);">📥 .MD</button>
+            <button id="btn-save-note-history" class="btn-primary" style="padding: 6px 12px; font-size: 0.78rem;">💾 Guardar</button>
+          </div>
+        </div>
+
+        <!-- Panel 1: Apuntes en Markdown -->
+        <div id="panel-notes-markdown">
+          <div id="rendered-markdown-content" class="markdown-body">
+            <!-- Renderizado dinámico de Marked.js -->
+          </div>
+        </div>
+
+        <!-- Panel 2: Mapa Mental en Mermaid -->
+        <div id="panel-notes-mindmap" style="display: none;">
+          <div class="mindmap-scroll-area">
+            <div id="rendered-mindmap-svg" style="width: 100%;">
+              <!-- Renderizado dinámico de Mermaid.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card: Historial de Apuntes Guardados -->
+      <div class="glass-card">
+        <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 12px;">🗂️ Apuntes Recientes Guardados</h3>
+        <div id="notes-saved-history-list">
+          <!-- Renderizado dinámicamente desde LocalStorage -->
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- MODAL: Crear Nueva Flashcard -->
@@ -287,6 +387,10 @@
       <span class="nav-icon">🗂️</span>
       <span>Tarjetas</span>
     </button>
+    <button class="nav-item" data-tab="notes">
+      <span class="nav-icon">🧠</span>
+      <span>Apuntes IA</span>
+    </button>
     <button class="nav-item" data-tab="tasks">
       <span class="nav-icon">📝</span>
       <span>Tareas</span>
@@ -302,6 +406,7 @@
   <script src="./js/pomodoro.js"></script>
   <script src="./js/flashcards.js"></script>
   <script src="./js/tasks.js"></script>
+  <script src="./js/notes.js"></script>
   <script src="./js/app.js"></script>
 </body>
 </html>
