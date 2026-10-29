@@ -1,10 +1,10 @@
 // ==========================================================================
 // MÓDULO DE APUNTES INTELIGENTES Y MAPAS MENTALES CON IA
-// Procesamiento client-side con PDF.js + Google Gemini 1.5 Flash
+// Procesamiento client-side con PDF.js + Google Gemini (Auto-Fallback de Modelos)
 // Renderizado dual: Marked.js (Markdown) y Mermaid.js (SVG Mindmap)
 // ==========================================================================
 
-// 1. Clave API de Gemini fija en el código (sin solicitar nada en pantalla)
+// 1. Clave API de Gemini fija en el código
 const GEMINI_API_KEY = "AQ" + ".Ab8RN6K96o_9-AjlAR7ZIpZCHgpvXVPw8QYqUqU0YIfE-Q4Ayg";
 
 class SmartNotesController {
@@ -12,6 +12,7 @@ class SmartNotesController {
     this.notesHistoryStorageKey = 'estudio_notes_history_v1';
     this.selectedFile = null;
     this.currentResult = null;
+    this.discoveredWorkingModel = localStorage.getItem('estudio_gemini_working_model') || null;
 
     this.dom = {
       // Subida de PDF
@@ -202,7 +203,105 @@ class SmartNotesController {
   }
 
   // ========================================================================
-  // PASO 2: Procesamiento Directo con Gemini 1.5 Flash (Sin pedir API Key)
+  // PASO 2: Función con Fallback Inteligente y ListModels Dinámico
+  // ========================================================================
+  async requestGeminiWithFallback(requestBody) {
+    // Si ya descubrimos un modelo que funciona en sesiones previas, probarlo primero
+    const endpointsToTry = [];
+    if (this.discoveredWorkingModel) {
+      endpointsToTry.push(this.discoveredWorkingModel);
+    }
+
+    // Lista de endpoints candidatos
+    endpointsToTry.push(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`
+    );
+
+    let lastError = null;
+
+    // Intentar candidatos iniciales
+    for (const url of endpointsToTry) {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Guardar el endpoint exitoso para futuras consultas
+          this.discoveredWorkingModel = url;
+          localStorage.setItem('estudio_gemini_working_model', url);
+          return data;
+        }
+
+        const errData = await response.json().catch(() => ({}));
+        const errMsg = errData.error?.message || `HTTP ${response.status}`;
+        lastError = new Error(errMsg);
+
+        // Si no es un error de modelo no encontrado (404), no seguir probando a ciegas
+        if (!errMsg.toLowerCase().includes('not found') && response.status !== 404) {
+          throw lastError;
+        }
+      } catch (e) {
+        lastError = e;
+        if (!e.message.toLowerCase().includes('not found') && !e.message.includes('404')) {
+          throw e;
+        }
+      }
+    }
+
+    // 2. Si todos los candidatos fijos fallaron con "not found", consultar ModelService.ListModels
+    try {
+      this.setStatus(true, 'Descubriendo modelos disponibles para tu cuenta...', false);
+      const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`;
+      const listResp = await fetch(listUrl);
+
+      if (listResp.ok) {
+        const listData = await listResp.json();
+        const availableModels = (listData.models || []).filter(m => 
+          m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
+        );
+
+        if (availableModels.length > 0) {
+          // Ordenar preferentemente los flash y gemini
+          availableModels.sort((a, b) => {
+            const aScore = (a.name.includes('flash') ? 2 : 0) + (a.name.includes('gemini') ? 1 : 0);
+            const bScore = (b.name.includes('flash') ? 2 : 0) + (b.name.includes('gemini') ? 1 : 0);
+            return bScore - aScore;
+          });
+
+          for (const model of availableModels) {
+            const dynamicUrl = `https://generativelanguage.googleapis.com/v1beta/${model.name}:generateContent?key=${GEMINI_API_KEY}`;
+            const dynResp = await fetch(dynamicUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(requestBody)
+            });
+
+            if (dynResp.ok) {
+              const data = await dynResp.json();
+              this.discoveredWorkingModel = dynamicUrl;
+              localStorage.setItem('estudio_gemini_working_model', dynamicUrl);
+              return data;
+            }
+          }
+        }
+      }
+    } catch (listErr) {
+      console.warn('Fallo en consulta ListModels:', listErr);
+    }
+
+    throw lastError || new Error('No se encontró ningún modelo de Gemini disponible para la clave.');
+  }
+
+  // ========================================================================
+  // PASO 3: Procesamiento Completo con IA
   // ========================================================================
   async processDocumentWithAI() {
     this.clearErrors();
@@ -219,9 +318,8 @@ class SmartNotesController {
         ? pdfText.substring(0, 35000) + '\n...[Texto truncado para análisis]'
         : pdfText;
 
-      // 2. Consulta a Gemini con clave fija
+      // 2. Consulta a Gemini con fallback inteligente
       this.setStatus(true, 'Generando con IA...', false);
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
       const promptInstructions = `
 Actúa como un profesor universitario y sintetizador académico de élite.
@@ -236,24 +334,15 @@ Texto del documento:
 ${trimmedText}
       `;
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptInstructions }] }],
-          generationConfig: {
-            response_mime_type: "application/json",
-            temperature: 0.3
-          }
-        })
-      });
+      const requestBody = {
+        contents: [{ parts: [{ text: promptInstructions }] }],
+        generationConfig: {
+          response_mime_type: "application/json",
+          temperature: 0.3
+        }
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `Error HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await this.requestGeminiWithFallback(requestBody);
       const rawOutput = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawOutput) throw new Error('Respuesta vacía de la API de Gemini.');
 
@@ -269,7 +358,7 @@ ${trimmedText}
       this.currentResult = parsed;
       this.setStatus(true, 'Renderizando apuntes y mapa mental...', false);
       await this.renderOutput(parsed);
-      this.saveCurrentNoteToHistory(false); // Guardar automáticamente en el historial
+      this.saveCurrentNoteToHistory(false);
       this.setStatus(false, '', true);
 
     } catch (err) {
@@ -280,7 +369,7 @@ ${trimmedText}
   }
 
   // ========================================================================
-  // PASO 3: Renderizado Dual (Marked.js y Mermaid.js)
+  // PASO 4: Renderizado Dual (Marked.js y Mermaid.js)
   // ========================================================================
   async renderOutput(result) {
     if (!this.dom.resultsContainer) return;
@@ -318,7 +407,6 @@ ${trimmedText}
     const titleMatch = this.currentResult.apuntes.match(/^#\s+(.*)/m);
     const title = titleMatch ? titleMatch[1].replace(/[*_]/g, '') : (this.selectedFile?.name || 'Apunte de Estudio');
 
-    // Evitar duplicar el mismo apunte si ya se guardó recién
     const exists = history.length > 0 && history[0].title === title;
     if (!exists) {
       history.unshift({
