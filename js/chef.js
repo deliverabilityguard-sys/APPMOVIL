@@ -247,11 +247,12 @@ Analiza esta imagen de una nevera/alacena e identifica todos los ingredientes y 
 
       let detectedIngredients = [];
       try {
-        detectedIngredients = JSON.parse(rawText);
+        detectedIngredients = this.cleanAndParseJSONArray(rawText);
       } catch (e) {
+        console.warn("Fallo parser array primario, intentando regex:", e);
         const match = rawText.match(/\[[\s\S]*\]/);
         if (match) detectedIngredients = JSON.parse(match[0]);
-        else throw new Error('Formato de respuesta no reconocido.');
+        else throw new Error('No se lograron identificar ingredientes claros. Intenta con más iluminación.');
       }
 
       if (!Array.isArray(detectedIngredients) || detectedIngredients.length === 0) {
@@ -346,6 +347,34 @@ Analiza esta imagen de una nevera/alacena e identifica todos los ingredientes y 
   }
 
   // ========================================================================
+  // PARSERS ROBUSTOS DE JSON (ELIMINA MARKDOWN, TEXTO EXTRA Y PROSA)
+  // ========================================================================
+
+  cleanAndParseJSON(rawText) {
+    if (!rawText) throw new Error("Respuesta vacía");
+    // Eliminar bloques de código markdown tipo ```json o ```
+    let cleaned = rawText.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
+    // Si aún queda texto fuera del JSON, extraer solo lo que esté entre la primera { y la última }
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+    }
+    return JSON.parse(cleaned);
+  }
+
+  cleanAndParseJSONArray(rawText) {
+    if (!rawText) throw new Error("Respuesta vacía");
+    let cleaned = rawText.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
+    const firstBracket = cleaned.indexOf('[');
+    const lastBracket = cleaned.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+      cleaned = cleaned.substring(firstBracket, lastBracket + 1);
+    }
+    return JSON.parse(cleaned);
+  }
+
+  // ========================================================================
   // GENERACIÓN DE RECETA CON IA (GEMINI TEXT)
   // ========================================================================
 
@@ -372,7 +401,7 @@ Actúa como un chef experto en supervivencia foránea y universitaria.
 A partir de estos ingredientes disponibles: [${ingredientsArray.join(', ')}], crea una receta ultrarrápida, deliciosa y económica.
 Enfócate en practicidad: pocos utensilios (máximo 1 sartén u olla), mínimo tiempo (10 a 20 min) y costo bajísimo.
 
-Responde ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
+Devuelve estrictamente un objeto JSON plano sin backticks, sin la palabra json, sin introducciones ni despedidas con esta estructura exacta:
 {
   "titulo": "Nombre creativo y apetitoso (ej. Arroz Salvavidas con Atún)",
   "costoPorcion": "$3.200 / porción",
@@ -394,7 +423,7 @@ Responde ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
         contents: [{ parts: [{ text: promptText }] }],
         generationConfig: {
           temperature: 0.2,
-          maxOutputTokens: 900,
+          maxOutputTokens: 1200,
           responseMimeType: "application/json"
         }
       };
@@ -429,15 +458,19 @@ Responde ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
 
       const data = await response.json();
       const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) throw new Error('Respuesta vacía.');
+      if (!rawText) throw new Error('Respuesta vacía de la IA.');
 
       let recipe;
       try {
-        recipe = JSON.parse(rawText);
+        recipe = this.cleanAndParseJSON(rawText);
       } catch (e) {
+        console.warn("Fallo parser principal de receta, intentando fallback:", e);
         const match = rawText.match(/\{[\s\S]*\}/);
-        if (match) recipe = JSON.parse(match[0]);
-        else throw new Error('Formato inválido de receta.');
+        if (match) {
+          recipe = JSON.parse(match[0]);
+        } else {
+          throw new Error('Formato inválido de receta devuelto por la IA.');
+        }
       }
 
       recipe.id = 'rec-' + Date.now();
@@ -458,36 +491,60 @@ Responde ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
 
   renderRecipe(recipe) {
     const elContainer = document.getElementById('chef-result-container');
-    if (!elContainer) return;
+    if (!elContainer || !recipe) return;
+
+    // Normalización de campos con fallbacks robustos
+    const titulo = recipe.titulo || recipe.nombre || recipe.title || "Receta Foránea";
+    const costo = recipe.costoPorcion || recipe.costo_estimado || recipe.precio || recipe.costo || "$3.200 / porción";
+    const nivel = recipe.nivel || recipe.dificultad || "CERO ESTRÉS";
+    const tiempo = recipe.tiempo || recipe.duracion || "15 min";
+    const sartenes = recipe.sartenes || recipe.utensilios || "1 sartén";
+    const emoji = recipe.emoji || "🍳";
+    const descripcion = recipe.descripcion || recipe.resumen || recipe.description || "Receta rápida, deliciosa y económica pensada para estudiantes.";
+    const pasos = Array.isArray(recipe.pasos)
+      ? recipe.pasos
+      : (typeof recipe.pasos === 'string' ? [recipe.pasos] : ["Cocinar los ingredientes integrados a fuego medio."]);
+    const truco = recipe.trucoForaneo || recipe.truco_estudiante || recipe.truco || "Sazona con una pizca de sal y pimienta.";
+
+    // Guardar valores normalizados
+    recipe.titulo = titulo;
+    recipe.costoPorcion = costo;
+    recipe.nivel = nivel;
+    recipe.tiempo = tiempo;
+    recipe.sartenes = sartenes;
+    recipe.emoji = emoji;
+    recipe.descripcion = descripcion;
+    recipe.pasos = pasos;
+    recipe.trucoForaneo = truco;
 
     elContainer.innerHTML = `
       <div class="recipe-card-result">
         <div class="recipe-hero-banner">
-          <span class="recipe-hero-emoji">${recipe.emoji || '🍳'}</span>
+          <span class="recipe-hero-emoji">${emoji}</span>
         </div>
         <div class="recipe-content">
-          <h3 class="recipe-title">${this.escapeHtml(recipe.titulo)}</h3>
+          <h3 class="recipe-title">${this.escapeHtml(titulo)}</h3>
           
           <div class="recipe-badges-row">
-            <span class="recipe-badge badge-cost">💰 ${recipe.costoPorcion || '$3.500 / porción'}</span>
-            <span class="recipe-badge badge-level">🟢 NIVEL: ${recipe.nivel || 'CERO ESTRÉS'}</span>
-            <span class="recipe-badge badge-time">⏱️ ${recipe.tiempo || '15 min'}</span>
-            <span class="recipe-badge badge-pan">🍳 ${recipe.sartenes || '1 sartén'}</span>
+            <span class="recipe-badge badge-cost">💰 ${this.escapeHtml(costo)}</span>
+            <span class="recipe-badge badge-level">🟢 NIVEL: ${this.escapeHtml(nivel)}</span>
+            <span class="recipe-badge badge-time">⏱️ ${this.escapeHtml(tiempo)}</span>
+            <span class="recipe-badge badge-pan">🍳 ${this.escapeHtml(sartenes)}</span>
           </div>
 
-          <p class="recipe-desc">${this.escapeHtml(recipe.descripcion)}</p>
+          <p class="recipe-desc">${this.escapeHtml(descripcion)}</p>
 
           <div id="recipe-steps-box" class="recipe-steps-list">
             <strong style="display:block; font-size:0.86rem; color:#fff; margin-bottom:8px;">👨‍🍳 Preparación Paso a Paso:</strong>
-            ${(recipe.pasos || []).map((paso, idx) => `
+            ${pasos.map((paso, idx) => `
               <div class="step-item">
                 <span class="step-num">${idx + 1}</span>
                 <span>${this.escapeHtml(paso)}</span>
               </div>
             `).join('')}
-            ${recipe.trucoForaneo ? `
+            ${truco ? `
               <div style="margin-top: 12px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--primary); border-radius: 6px; font-size: 0.78rem; color: #a7f3d0;">
-                💡 <strong>Truco Foráneo:</strong> ${this.escapeHtml(recipe.trucoForaneo)}
+                💡 <strong>Truco Foráneo:</strong> ${this.escapeHtml(truco)}
               </div>
             ` : ''}
           </div>
