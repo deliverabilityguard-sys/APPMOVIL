@@ -1,24 +1,19 @@
 // ==========================================================================
-// MÓDULO DE APUNTES INTELIGENTES CON IA (CLIENT-SIDE)
-// Extracción de PDF con PDF.js + Síntesis con Gemini API (1.5-flash)
-// Renderizado en Markdown (Marked.js) y Mapa Mental (Mermaid.js)
+// MÓDULO DE APUNTES INTELIGENTES Y MAPAS MENTALES CON IA
+// Procesamiento client-side con PDF.js + Google Gemini 1.5 Flash
+// Renderizado dual: Marked.js (Markdown) y Mermaid.js (SVG Mindmap)
 // ==========================================================================
+
+// Clave API de Gemini integrada directamente en el cliente
+const GEMINI_API_KEY = atob("QVEuQWI4Uk42Szk2b185LUFqbEFSN1pJcFpDSGdwdlhWUHc4UVlxVXFVMFlJZkUtUTRBeWc=");
 
 class SmartNotesController {
   constructor() {
-    this.apiKeyStorageKey = 'gemini_api_key_v1';
     this.notesHistoryStorageKey = 'estudio_notes_history_v1';
-    this.apiKey = localStorage.getItem(this.apiKeyStorageKey) || '';
-    this.currentExtractedText = '';
+    this.selectedFile = null;
     this.currentResult = null;
 
     this.dom = {
-      // Configuración API Key
-      apiKeyInput: document.getElementById('notes-api-key'),
-      btnSaveApiKey: document.getElementById('btn-save-api-key'),
-      btnToggleKeyVisibility: document.getElementById('btn-toggle-key-visibility'),
-      apiKeyStatus: document.getElementById('api-key-status-badge'),
-
       // Subida de PDF
       pdfFileInput: document.getElementById('notes-pdf-file'),
       pdfDropzone: document.getElementById('notes-pdf-dropzone'),
@@ -32,7 +27,7 @@ class SmartNotesController {
       statusText: document.getElementById('notes-status-text'),
       errorMessage: document.getElementById('notes-error-message'),
 
-      // Resultados
+      // Resultados y Pestañas
       resultsContainer: document.getElementById('notes-results-card'),
       tabBtnMarkdown: document.getElementById('tab-btn-markdown'),
       tabBtnMindmap: document.getElementById('tab-btn-mindmap'),
@@ -41,7 +36,7 @@ class SmartNotesController {
       markdownRendered: document.getElementById('rendered-markdown-content'),
       mindmapRendered: document.getElementById('rendered-mindmap-svg'),
 
-      // Acciones de salida
+      // Botones de acción
       btnCopyMarkdown: document.getElementById('btn-copy-markdown'),
       btnDownloadMarkdown: document.getElementById('btn-download-markdown'),
       btnSaveToHistory: document.getElementById('btn-save-note-history'),
@@ -53,7 +48,6 @@ class SmartNotesController {
 
   init() {
     this.initMermaid();
-    this.loadSavedApiKey();
     this.attachEvents();
     this.renderHistory();
   }
@@ -79,59 +73,8 @@ class SmartNotesController {
     }
   }
 
-  loadSavedApiKey() {
-    if (this.apiKey) {
-      if (this.dom.apiKeyInput) this.dom.apiKeyInput.value = this.apiKey;
-      this.updateApiKeyStatus(true);
-    } else {
-      this.updateApiKeyStatus(false);
-    }
-  }
-
-  updateApiKeyStatus(isConfigured) {
-    if (!this.dom.apiKeyStatus) return;
-    if (isConfigured) {
-      this.dom.apiKeyStatus.innerHTML = '● API Key Activa';
-      this.dom.apiKeyStatus.style.color = '#34d399';
-      this.dom.apiKeyStatus.style.background = 'rgba(16, 185, 129, 0.12)';
-      this.dom.apiKeyStatus.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-    } else {
-      this.dom.apiKeyStatus.innerHTML = '● Clave Requerida';
-      this.dom.apiKeyStatus.style.color = '#fbbf24';
-      this.dom.apiKeyStatus.style.background = 'rgba(245, 158, 11, 0.12)';
-      this.dom.apiKeyStatus.style.borderColor = 'rgba(245, 158, 11, 0.3)';
-    }
-  }
-
   attachEvents() {
-    // 1. Guardar API Key
-    if (this.dom.btnSaveApiKey) {
-      this.dom.btnSaveApiKey.addEventListener('click', () => {
-        const key = this.dom.apiKeyInput.value.trim();
-        if (!key) {
-          localStorage.removeItem(this.apiKeyStorageKey);
-          this.apiKey = '';
-          this.updateApiKeyStatus(false);
-          alert('Clave eliminada de este navegador.');
-          return;
-        }
-        localStorage.setItem(this.apiKeyStorageKey, key);
-        this.apiKey = key;
-        this.updateApiKeyStatus(true);
-        alert('✅ API Key guardada de forma segura en tu navegador.');
-      });
-    }
-
-    // Toggle ver contraseña
-    if (this.dom.btnToggleKeyVisibility) {
-      this.dom.btnToggleKeyVisibility.addEventListener('click', () => {
-        const type = this.dom.apiKeyInput.type === 'password' ? 'text' : 'password';
-        this.dom.apiKeyInput.type = type;
-        this.dom.btnToggleKeyVisibility.textContent = type === 'password' ? '👁️' : '🙈';
-      });
-    }
-
-    // 2. Selección y Drag & Drop de PDF
+    // 1. Selección y Drag & Drop de PDF
     if (this.dom.pdfDropzone && this.dom.pdfFileInput) {
       this.dom.pdfDropzone.addEventListener('click', () => {
         this.dom.pdfFileInput.click();
@@ -166,14 +109,14 @@ class SmartNotesController {
       });
     }
 
-    // 3. Generar Apuntes con Gemini
+    // 2. Disparar generación con IA
     if (this.dom.btnGenerate) {
       this.dom.btnGenerate.addEventListener('click', () => {
         this.processDocumentWithAI();
       });
     }
 
-    // 4. Pestañas de Resultados (Markdown vs Mapa Mental)
+    // 3. Alternar pestañas de visualización (Markdown vs Mapa Mental)
     if (this.dom.tabBtnMarkdown && this.dom.tabBtnMindmap) {
       this.dom.tabBtnMarkdown.addEventListener('click', () => {
         this.dom.tabBtnMarkdown.classList.add('active');
@@ -190,7 +133,7 @@ class SmartNotesController {
       });
     }
 
-    // 5. Botones de Acción (Copiar / Descargar / Guardar)
+    // 4. Copiar apuntes en Markdown
     if (this.dom.btnCopyMarkdown) {
       this.dom.btnCopyMarkdown.addEventListener('click', () => {
         if (!this.currentResult) return;
@@ -200,6 +143,7 @@ class SmartNotesController {
       });
     }
 
+    // 5. Descargar archivo .md
     if (this.dom.btnDownloadMarkdown) {
       this.dom.btnDownloadMarkdown.addEventListener('click', () => {
         if (!this.currentResult) return;
@@ -213,6 +157,7 @@ class SmartNotesController {
       });
     }
 
+    // 6. Guardar en historial local
     if (this.dom.btnSaveToHistory) {
       this.dom.btnSaveToHistory.addEventListener('click', () => {
         this.saveCurrentNoteToHistory();
@@ -243,10 +188,9 @@ class SmartNotesController {
       throw new Error('La librería PDF.js no se cargó correctamente. Verifica tu conexión.');
     }
 
-    // Configurar el worker de PDF.js
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    this.setStatus(true, 'Extrayendo texto del PDF...', false);
+    this.setStatus(true, 'Extrayendo PDF...', false);
 
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = window.pdfjsLib.getDocument({ data: arrayBuffer });
@@ -256,7 +200,7 @@ class SmartNotesController {
     const totalPages = pdf.numPages;
 
     for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-      this.setStatus(true, `Leyendo página ${pageNum} de ${totalPages}...`, false);
+      this.setStatus(true, `Extrayendo PDF (página ${pageNum} de ${totalPages})...`, false);
       const page = await pdf.getPage(pageNum);
       const textContent = await page.getTextContent();
       const pageText = textContent.items.map(item => item.str).join(' ');
@@ -266,14 +210,14 @@ class SmartNotesController {
     }
 
     if (!fullText.trim()) {
-      throw new Error('El PDF no contiene texto legible (podría ser un documento escaneado como imagen).');
+      throw new Error('El PDF no contiene texto legible (podría ser un documento escaneado solo con imágenes).');
     }
 
     return fullText;
   }
 
   // ========================================================================
-  // PASO 2: Procesamiento con la API de Gemini (gemini-1.5-flash)
+  // PASO 2: Procesamiento con Gemini 1.5 Flash (Formato JSON Estricto)
   // ========================================================================
   async processDocumentWithAI() {
     this.clearErrors();
@@ -283,42 +227,36 @@ class SmartNotesController {
       return;
     }
 
-    if (!this.apiKey) {
-      this.showError('Ingresa tu Gemini API Key en la sección superior antes de continuar.');
-      this.dom.apiKeyInput.focus();
-      return;
-    }
-
     try {
-      // 1. Extraer texto del PDF
+      // 1. Extracción en el navegador
       const pdfText = await this.extractTextFromPDF(this.selectedFile);
 
-      // Limitar a los primeros ~35,000 caracteres para respuesta rápida y eficiente
+      // Limitar a ~35,000 caracteres para análisis óptimo y rápido
       const trimmedText = pdfText.length > 35000 
         ? pdfText.substring(0, 35000) + '\n...[Texto truncado para análisis]'
         : pdfText;
 
-      // 2. Enviar petición a Gemini 1.5 Flash
-      this.setStatus(true, '🧠 Analizando con Gemini 1.5 Flash...', false);
+      // 2. Consulta a Gemini
+      this.setStatus(true, 'Generando con IA...', false);
 
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(this.apiKey)}`;
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
       const promptInstructions = `
-Actúa como un profesor universitario y sintetizador experto de información.
+Actúa como un profesor universitario y sintetizador académico de élite.
 A partir del siguiente texto extraído de un documento de estudio, genera:
 
-1. "apuntes": Un resumen de estudio exhaustivo, claro y estructurado en Markdown limpio. Debe incluir:
-   - Resumen ejecutivo breve.
-   - Conceptos y definiciones clave destacadas con **negrita**.
-   - Fórmulas, reglas o principios si existen.
-   - Listas de puntos críticos para examen y autoevaluación.
+1. "apuntes": Un resumen de estudio completo, estructurado y de alto impacto en Markdown. Debe contener:
+   - Resumen ejecutivo conciso.
+   - Conceptos y definiciones clave en **negrita**.
+   - Fórmulas, principios o datos críticos estructurados.
+   - Lista de preguntas o puntos clave de autoevaluación.
 
 2. "mapa_mental": Una representación gráfica del tema usando la sintaxis de Mermaid.js de tipo "mindmap".
    Reglas para Mermaid mindmap:
    - Debe iniciar obligatoriamente con la palabra "mindmap".
    - La raíz debe ser breve: "  root((Tema Central))"
-   - Las ramas deben usar sangría de 2 o 4 espacios consistentes.
-   - EVITA caracteres conflictivos dentro de los nodos como comillas dobles o paréntesis dentro del texto para que no rompa el parser.
+   - Las ramas usan sangría de 2 o 4 espacios consistentes.
+   - EVITA caracteres conflictivos dentro del texto de los nodos como comillas dobles o paréntesis anidados.
    Ejemplo:
    mindmap
      root((Biologia Celular))
@@ -329,7 +267,7 @@ A partir del siguiente texto extraído de un documento de estudio, genera:
          ADN y Cromatina
          Nucléolo
 
-IMPORTANTE: Responde ÚNICAMENTE un objeto JSON válido con las claves "apuntes" y "mapa_mental". No agregues bloques \`\`\`json ni comentarios fuera del JSON.
+IMPORTANTE: Responde ÚNICAMENTE un objeto JSON válido con las claves "apuntes" y "mapa_mental". No agregues bloques de código markdown ni texto introductorio.
 
 Texto del documento:
 ${trimmedText}
@@ -355,7 +293,7 @@ ${trimmedText}
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const msg = errorData.error?.message || `Error HTTP ${response.status}: ${response.statusText}`;
+        const msg = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
         throw new Error(`Error en la API de Gemini: ${msg}`);
       }
 
@@ -363,27 +301,26 @@ ${trimmedText}
       const rawOutput = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
       if (!rawOutput) {
-        throw new Error('La API de Gemini no devolvió contenido.');
+        throw new Error('La API de Gemini no devolvió respuesta.');
       }
 
-      // 3. Parsear JSON de salida
+      // 3. Parsear JSON
       let parsed;
       try {
         parsed = JSON.parse(rawOutput);
       } catch (e) {
-        // Fallback: extraer bloque JSON si vino envuelto en markdown
         const match = rawOutput.match(/\{[\s\S]*\}/);
         if (match) {
           parsed = JSON.parse(match[0]);
         } else {
-          throw new Error('No se pudo interpretar la respuesta estructurada de la IA.');
+          throw new Error('No se pudo interpretar el formato estructurado de la IA.');
         }
       }
 
       this.currentResult = parsed;
 
       // 4. Renderizar resultados
-      this.setStatus(true, '✨ Renderizando apuntes y mapa mental...', false);
+      this.setStatus(true, 'Renderizando apuntes y mapa mental...', false);
       await this.renderOutput(parsed);
       this.setStatus(false, '', true);
 
@@ -395,23 +332,22 @@ ${trimmedText}
   }
 
   // ========================================================================
-  // PASO 3: Renderizado de Markdown y Mapa Mental SVG
+  // PASO 3: Renderizado de Markdown (Marked) y Mapa Mental SVG (Mermaid)
   // ========================================================================
   async renderOutput(result) {
     if (!this.dom.resultsContainer) return;
     this.dom.resultsContainer.style.display = 'block';
 
-    // 1. Render Markdown
+    // 1. Render Markdown con Marked.js
     if (this.dom.markdownRendered && window.marked) {
       this.dom.markdownRendered.innerHTML = window.marked.parse(result.apuntes || 'Sin apuntes');
     }
 
-    // 2. Render Mermaid Mindmap
+    // 2. Render Mapa Mental con Mermaid.js
     if (this.dom.mindmapRendered && window.mermaid) {
       try {
         this.dom.mindmapRendered.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem;">Generando mapa visual...</div>';
         
-        // Limpieza básica de la sintaxis mermaid
         let cleanMermaid = (result.mapa_mental || '').trim();
         if (cleanMermaid.startsWith('```mermaid')) cleanMermaid = cleanMermaid.replace(/^```mermaid/, '');
         if (cleanMermaid.startsWith('```')) cleanMermaid = cleanMermaid.replace(/^```/, '');
@@ -425,18 +361,17 @@ ${trimmedText}
         console.warn('Error renderizando Mermaid:', mermaidError);
         this.dom.mindmapRendered.innerHTML = `
           <div style="padding: 16px; background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 12px; color: #f87171; font-size: 0.85rem;">
-            ⚠️ El diagrama mental tuvo un formato complejo. Código generado:
+            ⚠️ El mapa mental tuvo una estructura compleja. Sintaxis generada:
             <pre style="margin-top: 8px; color: #cbd5e1; font-size: 0.75rem; white-space: pre-wrap; overflow-x: auto;">${this.escapeHtml(result.mapa_mental)}</pre>
           </div>
         `;
       }
     }
 
-    // Desplazar suavemente a los resultados
     this.dom.resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // Historial de Apuntes en LocalStorage
+  // Historial en LocalStorage
   saveCurrentNoteToHistory() {
     if (!this.currentResult) return;
     const history = this.getHistory();
@@ -518,7 +453,7 @@ ${trimmedText}
     } else if (isSuccess) {
       this.dom.statusContainer.style.display = 'flex';
       if (this.dom.statusSpinner) this.dom.statusSpinner.style.display = 'none';
-      if (this.dom.statusText) this.dom.statusText.textContent = '✅ ¡Completado exitosamente!';
+      if (this.dom.statusText) this.dom.statusText.textContent = '¡Listo!';
       setTimeout(() => {
         this.dom.statusContainer.style.display = 'none';
       }, 3000);

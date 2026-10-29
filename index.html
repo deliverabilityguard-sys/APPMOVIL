@@ -249,29 +249,12 @@
 
     <!-- 6. VISTA APUNTES INTELIGENTES CON IA -->
     <section id="view-notes" class="view-panel">
-      <!-- Card: Configuración de Gemini API Key -->
-      <div class="glass-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <h2 style="font-size: 1.12rem; font-weight: 700;">🔑 Gemini API Key</h2>
-          <span id="api-key-status-badge" class="offline-pill" style="font-size: 0.7rem;">● Clave Requerida</span>
-        </div>
-        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">
-          Procesamiento directo en tu dispositivo con <strong style="color:#38bdf8;">gemini-1.5-flash</strong>. Tu clave se almacena exclusivamente en tu navegador.
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color: #818cf8; text-decoration: none; font-weight: 600; margin-left: 4px;">Obtén una gratis aquí ↗</a>
-        </p>
-
-        <div style="display: flex; gap: 8px;">
-          <div style="position: relative; flex: 1;">
-            <input id="notes-api-key" type="password" class="input-field" placeholder="Pega tu clave (AIzaSy...)" style="width: 100%; padding-right: 44px;">
-            <button id="btn-toggle-key-visibility" type="button" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.7;">👁️</button>
-          </div>
-          <button id="btn-save-api-key" class="btn-primary" style="padding: 0 16px;">Guardar</button>
-        </div>
-      </div>
-
       <!-- Card: Subida y Extracción de PDF -->
       <div class="glass-card">
-        <h2 style="font-size: 1.12rem; font-weight: 700; margin-bottom: 12px;">📄 Cargar Documento PDF</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h2 style="font-size: 1.15rem; font-weight: 700;">📄 Apuntes & Mapa Mental con IA</h2>
+          <span class="offline-pill" style="font-size: 0.72rem; color: #38bdf8; border-color: rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.1);">⚡ Gemini 1.5 Flash</span>
+        </div>
         
         <input type="file" id="notes-pdf-file" accept="application/pdf" style="display: none;">
         <div id="notes-pdf-dropzone" class="pdf-dropzone">
