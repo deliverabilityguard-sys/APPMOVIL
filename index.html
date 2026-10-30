@@ -559,7 +559,7 @@
 
     <!-- Viewport del Escáner con HUD y Láser -->
     <div class="scanner-viewport">
-      <video id="scanner-video" playsinline autoplay muted class="scanner-video-feed"></video>
+      <video id="camera-stream" autoplay playsinline muted webkit-playsinline class="scanner-video-feed" style="width: 100%; height: 100%; object-fit: cover;"></video>
       <canvas id="scanner-canvas" style="display: none;"></canvas>
       
       <!-- Fallback / Input de archivo oculto -->

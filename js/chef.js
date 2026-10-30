@@ -63,8 +63,12 @@ class ChefForaneo {
 
   async startCamera() {
     this.stopCamera();
-    const video = document.getElementById('scanner-video');
+    const video = document.getElementById('camera-stream') || document.getElementById('scanner-video');
     if (!video) return;
+
+    // Garantizar atributos para reproducción inline y autoplay en móviles
+    video.muted = true;
+    video.playsInline = true;
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       console.warn('[Escáner] getUserMedia no soportado, activando selector nativo.');
@@ -82,7 +86,7 @@ class ChefForaneo {
       };
       this.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       video.srcObject = this.mediaStream;
-      await video.play();
+      video.play().catch(err => console.warn("Error al iniciar video:", err));
     } catch (err) {
       console.warn('[Escáner] No se pudo acceder a la cámara continua:', err);
       // Fallback amigable: permitir tomar foto nativa con el input
@@ -94,7 +98,7 @@ class ChefForaneo {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
     }
-    const video = document.getElementById('scanner-video');
+    const video = document.getElementById('camera-stream') || document.getElementById('scanner-video');
     if (video) video.srcObject = null;
   }
 
@@ -105,7 +109,7 @@ class ChefForaneo {
 
   // Capturar fotograma actual del <video> y procesar con IA
   captureFrameFromVideo() {
-    const video = document.getElementById('scanner-video');
+    const video = document.getElementById('camera-stream') || document.getElementById('scanner-video');
     const canvas = document.getElementById('scanner-canvas');
 
     if (!video || !canvas || !video.videoWidth) {
