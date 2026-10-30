@@ -4,6 +4,28 @@
 // ==========================================================================
 
 const BUDGET_STORAGE_KEY = 'student_budget_data';
+const APP_DATA_VERSION = 'v31';
+
+// Reseteo automático si la versión es anterior o no existe
+(function checkAppDataReset() {
+  try {
+    const currentVersion = localStorage.getItem('app_data_version');
+    if (currentVersion !== APP_DATA_VERSION) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify({
+        dailyBudget: 0,
+        date: todayStr,
+        expenses: []
+      }));
+      localStorage.setItem('student_bills_data', JSON.stringify([]));
+      localStorage.setItem('saved_recipes', JSON.stringify([]));
+      localStorage.setItem('delivery_challenge_progress', JSON.stringify([false, false, false]));
+      localStorage.setItem('app_data_version', APP_DATA_VERSION);
+    }
+  } catch (err) {
+    console.warn('[Storage] Error al verificar versión de datos:', err);
+  }
+})();
 
 class BudgetManager {
   constructor() {
@@ -12,31 +34,16 @@ class BudgetManager {
     this.render();
   }
 
-  // Inicialización con datos de ejemplo para calzar con el diseño de Figma
+  // Inicialización limpia en ceros
   initDefaultData() {
     const todayStr = new Date().toISOString().split('T')[0];
     const stored = localStorage.getItem(BUDGET_STORAGE_KEY);
     
     if (!stored) {
       const initialData = {
-        dailyBudget: 20500,
+        dailyBudget: 0,
         date: todayStr,
-        expenses: [
-          {
-            id: 'exp-1',
-            title: 'Transporte bus',
-            amount: 3000,
-            time: '07:30',
-            icon: '🚌'
-          },
-          {
-            id: 'exp-2',
-            title: 'Tinto y empanada',
-            amount: 3000,
-            time: '10:15',
-            icon: '☕'
-          }
-        ]
+        expenses: []
       };
       this.saveData(initialData);
     } else {
@@ -53,9 +60,9 @@ class BudgetManager {
   getData() {
     try {
       const raw = localStorage.getItem(BUDGET_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : { dailyBudget: 20500, date: new Date().toISOString().split('T')[0], expenses: [] };
+      return raw ? JSON.parse(raw) : { dailyBudget: 0, date: new Date().toISOString().split('T')[0], expenses: [] };
     } catch (e) {
-      return { dailyBudget: 20500, date: new Date().toISOString().split('T')[0], expenses: [] };
+      return { dailyBudget: 0, date: new Date().toISOString().split('T')[0], expenses: [] };
     }
   }
 
@@ -95,7 +102,7 @@ class BudgetManager {
 
   setDailyBudget(amount) {
     const data = this.getData();
-    data.dailyBudget = Math.max(1000, Number(amount));
+    data.dailyBudget = Math.max(0, Number(amount) || 0);
     this.saveData(data);
     this.render();
   }
@@ -120,27 +127,40 @@ class BudgetManager {
     }
 
     if (elLevelBadge) {
-      const percentage = (available / data.dailyBudget) * 100;
-      if (percentage >= 50) {
-        elLevelBadge.innerHTML = '✨ Nivel: Bajo control';
+      if (data.dailyBudget <= 0) {
+        elLevelBadge.innerHTML = '🎯 Configura tu presupuesto';
         elLevelBadge.className = 'hero-budget-badge';
-      } else if (percentage > 15) {
-        elLevelBadge.innerHTML = '⚠️ Nivel: Ojo al gasto';
-        elLevelBadge.className = 'hero-budget-badge';
-        elLevelBadge.style.color = 'var(--accent-warning)';
-        elLevelBadge.style.borderColor = 'var(--accent-warning-border)';
-        elLevelBadge.style.backgroundColor = 'var(--accent-warning-bg)';
+        elLevelBadge.style.color = 'var(--primary)';
+        elLevelBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        elLevelBadge.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
       } else {
-        elLevelBadge.innerHTML = '🚨 Nivel: Modo supervivencia';
-        elLevelBadge.className = 'hero-budget-badge';
-        elLevelBadge.style.color = 'var(--accent-danger)';
-        elLevelBadge.style.borderColor = 'var(--accent-danger-border)';
-        elLevelBadge.style.backgroundColor = 'var(--accent-danger-bg)';
+        const percentage = (available / data.dailyBudget) * 100;
+        if (percentage >= 50) {
+          elLevelBadge.innerHTML = '✨ Nivel: Bajo control';
+          elLevelBadge.className = 'hero-budget-badge';
+          elLevelBadge.style.color = 'var(--primary)';
+          elLevelBadge.style.borderColor = '';
+          elLevelBadge.style.backgroundColor = '';
+        } else if (percentage > 15) {
+          elLevelBadge.innerHTML = '⚠️ Nivel: Ojo al gasto';
+          elLevelBadge.className = 'hero-budget-badge';
+          elLevelBadge.style.color = 'var(--accent-warning)';
+          elLevelBadge.style.borderColor = 'var(--accent-warning-border)';
+          elLevelBadge.style.backgroundColor = 'var(--accent-warning-bg)';
+        } else {
+          elLevelBadge.innerHTML = '🚨 Nivel: Modo supervivencia';
+          elLevelBadge.className = 'hero-budget-badge';
+          elLevelBadge.style.color = 'var(--accent-danger)';
+          elLevelBadge.style.borderColor = 'var(--accent-danger-border)';
+          elLevelBadge.style.backgroundColor = 'var(--accent-danger-bg)';
+        }
       }
     }
 
     if (elProgressBar) {
-      const spentPercent = Math.min(100, Math.max(0, (totalSpent / data.dailyBudget) * 100));
+      const spentPercent = data.dailyBudget > 0
+        ? Math.min(100, Math.max(0, (totalSpent / data.dailyBudget) * 100))
+        : 0;
       elProgressBar.style.width = `${spentPercent}%`;
       elProgressBar.style.backgroundColor = spentPercent > 85 ? 'var(--accent-danger)' : 'var(--primary)';
     }
@@ -154,7 +174,8 @@ class BudgetManager {
       if (data.expenses.length === 0) {
         elExpensesList.innerHTML = `
           <div style="text-align: center; padding: 24px 10px; color: var(--text-muted); font-size: 0.84rem;">
-            <span>🍃</span> Aún no registras gastos hoy. ¡Tu plata está a salvo!
+            <span style="font-size: 1.3rem; display: block; margin-bottom: 6px;">🍃</span>
+            Aún no has registrado gastos hoy. Presiona un botón para empezar.
           </div>
         `;
         return;

@@ -65,9 +65,9 @@ class HacksManager {
   getChallengeDays() {
     try {
       const stored = localStorage.getItem('delivery_challenge_progress');
-      return stored ? JSON.parse(stored) : [true, true, false]; // 2 de 3 por defecto como Figma
+      return stored ? JSON.parse(stored) : [false, false, false];
     } catch (e) {
-      return [true, true, false];
+      return [false, false, false];
     }
   }
 

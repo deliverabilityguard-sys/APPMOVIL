@@ -9,10 +9,15 @@ const RECIPES_STORAGE_KEY = 'saved_recipes';
 
 class ChefForaneo {
   constructor() {
-    this.selectedIngredients = new Set(['Arroz', 'Huevos', 'Tomate']);
+    this.selectedIngredients = new Set();
     this.currentRecipe = null;
     this.mediaStream = null;
     this.cameraFacing = 'environment'; // Cámara trasera por defecto en móviles
+
+    // Desmarcar chips en el DOM para inicio limpio
+    document.querySelectorAll('.chip-ingredient[data-ingredient]').forEach(chip => {
+      chip.classList.toggle('active', this.selectedIngredients.has(chip.dataset.ingredient));
+    });
 
     this.attachEvents();
     this.renderSelectedCount();
@@ -29,13 +34,13 @@ class ChefForaneo {
   }
 
   renderSelectedCount() {
-    const elCount = document.getElementById('chef-selected-count');
+    const elCounts = document.querySelectorAll('#chef-selected-count');
     const btnGenerate = document.getElementById('btn-generate-recipe');
     const count = this.selectedIngredients.size;
 
-    if (elCount) {
-      elCount.textContent = `${count} seleccionado${count === 1 ? '' : 's'}`;
-    }
+    elCounts.forEach(el => {
+      el.textContent = `${count} seleccionado${count === 1 ? '' : 's'}`;
+    });
 
     if (btnGenerate) {
       btnGenerate.disabled = count === 0;

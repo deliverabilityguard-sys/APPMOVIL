@@ -15,39 +15,7 @@ class BillsManager {
   initDefaultBills() {
     const stored = localStorage.getItem(BILLS_STORAGE_KEY);
     if (!stored) {
-      const defaultBills = [
-        {
-          id: 'bill-1',
-          name: 'Arriendo mensual',
-          amount: 350000,
-          dueDay: 5,
-          tagText: 'VENCE MAÑANA',
-          tagClass: 'tag-alert-red',
-          paid: false,
-          notes: 'Transferir antes del mediodía al propietario'
-        },
-        {
-          id: 'bill-2',
-          name: 'Internet compartido (300 MB)',
-          amount: 30000,
-          dueDay: 12,
-          tagText: 'EN 5 DÍAS',
-          tagClass: 'tag-alert-yellow',
-          paid: false,
-          notes: 'Darle el efectivo al vecino del 302'
-        },
-        {
-          id: 'bill-3',
-          name: 'Factura de luz y agua',
-          amount: 45000,
-          dueDay: 2,
-          tagText: 'PAGADO',
-          tagClass: 'tag-alert-blue',
-          paid: true,
-          notes: 'Pagado por PSE'
-        }
-      ];
-      this.saveBills(defaultBills);
+      this.saveBills([]);
     }
   }
 
@@ -128,8 +96,9 @@ class BillsManager {
     if (containerPending) {
       if (pendingBills.length === 0) {
         containerPending.innerHTML = `
-          <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.84rem;">
-            🎉 ¡Felicidades! No tienes pagos pendientes este mes.
+          <div style="text-align: center; padding: 24px 10px; color: var(--text-muted); font-size: 0.84rem;">
+            <span style="font-size: 1.3rem; display: block; margin-bottom: 6px;">🎉</span>
+            No tienes pagos pendientes registrados. Agrega uno con el botón verde.
           </div>
         `;
       } else {
