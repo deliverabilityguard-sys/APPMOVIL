@@ -18,11 +18,21 @@
   <!-- Estilos Principales (Figma Dark Glassmorphism & Neon Green) -->
   <link rel="stylesheet" href="./css/styles.css?v=26">
 
-  <!-- Detección Inmediata de Modo PWA Instalada vs Navegador -->
+  <!-- Detección Inmediata de Modo PWA Instalada / App Nativa Capacitor vs Navegador -->
   <script>
     (function() {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-      if (!isStandalone && !sessionStorage.getItem('pwa_skip_landing')) {
+      const isNativeApp = typeof window.Capacitor !== 'undefined' ||
+                          window.location.protocol === 'capacitor:' ||
+                          window.location.hostname === 'localhost' ||
+                          window.matchMedia('(display-mode: standalone)').matches ||
+                          window.navigator.standalone === true;
+
+      if (isNativeApp) {
+        document.documentElement.classList.remove('show-landing');
+        const style = document.createElement('style');
+        style.textContent = '#landing-install-overlay, .landing-overlay, .install-banner, .pwa-install-overlay, #btn-header-install { display: none !important; }';
+        document.head.appendChild(style);
+      } else if (!sessionStorage.getItem('pwa_skip_landing')) {
         document.documentElement.classList.add('show-landing');
       }
     })();
@@ -646,12 +656,12 @@
   </nav>
 
   <!-- ========================================================================
-       SCRIPTS MODULARES (V37)
+       SCRIPTS MODULARES (V38)
        ======================================================================== -->
-  <script src="./js/budget.js?v=37"></script>
-  <script src="./js/chef.js?v=37"></script>
-  <script src="./js/hacks.js?v=37"></script>
-  <script src="./js/bills.js?v=37"></script>
-  <script src="./js/app.js?v=37"></script>
+  <script src="./js/budget.js?v=38"></script>
+  <script src="./js/chef.js?v=38"></script>
+  <script src="./js/hacks.js?v=38"></script>
+  <script src="./js/bills.js?v=38"></script>
+  <script src="./js/app.js?v=38"></script>
 </body>
 </html>

@@ -27,22 +27,31 @@ class App {
     }
   }
 
-  // Detección de Modo de Ejecución: PWA Instalada (Standalone) vs Navegador Web
+  // Detección de Modo de Ejecución: App Nativa Capacitor / PWA Instalada vs Navegador Web
   setupLandingPage() {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const isNativeApp = typeof window.Capacitor !== 'undefined' ||
+                        window.location.protocol === 'capacitor:' ||
+                        window.location.hostname === 'localhost' ||
+                        window.matchMedia('(display-mode: standalone)').matches ||
+                        window.navigator.standalone === true;
+
     const overlay = document.getElementById('landing-install-overlay');
+    const installBanner = document.querySelector('.install-banner') || document.querySelector('.pwa-install-overlay');
+    const btnHeaderInstall = document.getElementById('btn-header-install');
     const btnInstall = document.getElementById('btn-landing-install');
     const btnSkip = document.getElementById('btn-landing-skip');
     const guideBox = document.getElementById('landing-install-guide');
 
-    // 1. Si ya se ejecuta como app instalada (standalone), funcionamiento 100% normal
-    if (isStandalone) {
+    // 1. Si corre en app nativa Capacitor o modo PWA instalada, suprimir 100% cualquier overlay o botón de instalación
+    if (isNativeApp) {
       document.documentElement.classList.remove('show-landing');
       if (overlay) overlay.style.display = 'none';
+      if (installBanner) installBanner.style.display = 'none';
+      if (btnHeaderInstall) btnHeaderInstall.style.display = 'none';
       return;
     }
 
-    // 2. Si no es standalone pero ya se seleccionó "Probar en la web" en esta sesión
+    // 2. Si no es nativa pero ya se seleccionó "Probar en la web" en esta sesión
     const skipped = sessionStorage.getItem('pwa_skip_landing');
     if (!skipped) {
       document.documentElement.classList.add('show-landing');
@@ -124,6 +133,11 @@ class App {
 
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
+      const isNativeApp = typeof window.Capacitor !== 'undefined' ||
+                          window.location.protocol === 'capacitor:' ||
+                          window.location.hostname === 'localhost';
+      if (isNativeApp) return;
+
       this.deferredPrompt = e;
       if (installBtn) {
         installBtn.style.display = 'inline-flex';
