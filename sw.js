@@ -1,4 +1,4 @@
-const CACHE_NAME = 'supervivencia-v35';
+const CACHE_NAME = 'supervivencia-v37';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

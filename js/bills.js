@@ -164,25 +164,219 @@ class BillsManager {
     });
   }
 
-  async requestNotificationPermission() {
-    if (!('Notification' in window)) {
-      console.warn("Notificaciones web no disponibles en este entorno.");
-      return;
+  getNextDueDate(dueDay) {
+    const now = new Date();
+    let year = now.getFullYear();
+    let month = now.getMonth();
+    if (now.getDate() > dueDay) {
+      month += 1;
+      if (month > 11) {
+        month = 0;
+        year += 1;
+      }
+    }
+    const maxDaysInMonth = new Date(year, month + 1, 0).getDate();
+    const day = Math.min(dueDay, maxDaysInMonth);
+    return new Date(year, month, day, 9, 0, 0);
+  }
+
+  generateGoogleCalendarUrl(bill) {
+    const date = this.getNextDueDate(bill.dueDay);
+    const pad = (n) => String(n).padStart(2, '0');
+    const y = date.getFullYear();
+    const m = pad(date.getMonth() + 1);
+    const d = pad(date.getDate());
+    const startStr = `${y}${m}${d}T090000`;
+    const endStr = `${y}${m}${d}T100000`;
+    
+    const title = `Pago: ${bill.name}`;
+    const details = `Recordatorio mensual de pago para ${bill.name} (${this.formatCurrency(bill.amount)}). ${bill.notes || ''}`.trim();
+    
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startStr}/${endStr}&details=${encodeURIComponent(details)}&recur=RRULE:FREQ=MONTHLY;BYMONTHDAY=${bill.dueDay}`;
+  }
+
+  downloadICS(bill) {
+    const date = this.getNextDueDate(bill.dueDay);
+    const pad = (n) => String(n).padStart(2, '0');
+    const y = date.getFullYear();
+    const m = pad(date.getMonth() + 1);
+    const d = pad(date.getDate());
+    const startStr = `${y}${m}${d}T090000`;
+    const endStr = `${y}${m}${d}T100000`;
+    const nowStr = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Supervivencia Estudiantil//Recordatorios//ES',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `UID:bill-${bill.id}-${Date.now()}@supervivencia.app`,
+      `DTSTAMP:${nowStr}`,
+      `DTSTART:${startStr}`,
+      `DTEND:${endStr}`,
+      `RRULE:FREQ=MONTHLY;BYMONTHDAY=${bill.dueDay}`,
+      `SUMMARY:Pago: ${bill.name}`,
+      `DESCRIPTION:Recordatorio mensual de pago: ${bill.name} (${this.formatCurrency(bill.amount)}). ${bill.notes || ''}`,
+      'STATUS:CONFIRMED',
+      'BEGIN:VALARM',
+      'TRIGGER:-P1D',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:Mañana vence el pago de ${bill.name}`,
+      'END:VALARM',
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    this.triggerDownloadBlob(icsContent, `recordatorio_${bill.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.ics`);
+  }
+
+  downloadAllICS(pendingBills) {
+    if (!pendingBills || pendingBills.length === 0) return;
+    const nowStr = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const pad = (n) => String(n).padStart(2, '0');
+
+    const events = pendingBills.map(bill => {
+      const date = this.getNextDueDate(bill.dueDay);
+      const y = date.getFullYear();
+      const m = pad(date.getMonth() + 1);
+      const d = pad(date.getDate());
+      const startStr = `${y}${m}${d}T090000`;
+      const endStr = `${y}${m}${d}T100000`;
+
+      return [
+        'BEGIN:VEVENT',
+        `UID:bill-${bill.id}-${Date.now()}@supervivencia.app`,
+        `DTSTAMP:${nowStr}`,
+        `DTSTART:${startStr}`,
+        `DTEND:${endStr}`,
+        `RRULE:FREQ=MONTHLY;BYMONTHDAY=${bill.dueDay}`,
+        `SUMMARY:Pago: ${bill.name}`,
+        `DESCRIPTION:Recordatorio mensual de pago: ${bill.name} (${this.formatCurrency(bill.amount)}). ${bill.notes || ''}`,
+        'STATUS:CONFIRMED',
+        'BEGIN:VALARM',
+        'TRIGGER:-P1D',
+        'ACTION:DISPLAY',
+        `DESCRIPTION:Mañana vence el pago de ${bill.name}`,
+        'END:VALARM',
+        'END:VEVENT'
+      ].join('\r\n');
+    }).join('\r\n');
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Supervivencia Estudiantil//Recordatorios//ES',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      events,
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    this.triggerDownloadBlob(icsContent, 'todos_los_recordatorios_pagos.ics');
+  }
+
+  triggerDownloadBlob(content, filename) {
+    const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    }, 100);
+  }
+
+  openRemindersModal() {
+    const modal = document.getElementById('modal-bill-reminders');
+    const body = document.getElementById('reminders-modal-body');
+    if (!modal || !body) return;
+
+    const pendingBills = this.getBills().filter(b => !b.paid);
+
+    if (pendingBills.length === 0) {
+      body.innerHTML = `
+        <div style="text-align: center; padding: 24px 10px;">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">🎉</div>
+          <h4 style="color: #fff; font-size: 1rem; margin-bottom: 6px;">¡Todo al día!</h4>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 18px;">
+            No tienes pagos pendientes registrados para agendar recordatorios.
+          </p>
+          <button type="button" class="btn-primary-neon" id="btn-reminders-add-bill" style="max-width: 220px; margin: 0 auto;">
+            <span>+</span> Agregar un pago
+          </button>
+        </div>
+      `;
+
+      const btnAddFromReminders = document.getElementById('btn-reminders-add-bill');
+      if (btnAddFromReminders) {
+        btnAddFromReminders.addEventListener('click', () => {
+          modal.classList.remove('open');
+          const modalAdd = document.getElementById('modal-add-bill');
+          if (modalAdd) modalAdd.classList.add('open');
+        });
+      }
+    } else {
+      body.innerHTML = `
+        <div style="margin-bottom: 14px;">
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px; line-height: 1.45;">
+            🔔 <strong style="color: var(--text-white);">Recordatorios activos:</strong><br>
+            Toca <strong>Google Cal</strong> o <strong>.ICS</strong> para sincronizar la alarma con tu calendario local (recibirás alerta 24h antes):
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            ${pendingBills.map(b => {
+              const gcalUrl = this.generateGoogleCalendarUrl(b);
+              return `
+                <div class="reminder-card-item">
+                  <div>
+                    <div style="font-weight: 800; font-size: 0.92rem; color: var(--text-white);">• ${this.escapeHtml(b.name)}</div>
+                    <div style="font-size: 0.76rem; color: var(--primary); font-weight: 700; margin-top: 2px;">
+                      Vence el día ${b.dueDay} de cada mes (${this.formatCurrency(b.amount)})
+                    </div>
+                    <div style="font-size: 0.72rem; color: var(--text-subtle); margin-top: 2px;">
+                      Recibirás una alerta en tu calendario local.
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 8px; margin-top: 4px;">
+                    <a href="${gcalUrl}" target="_blank" rel="noopener" class="btn-cal-action" style="background: rgba(16, 185, 129, 0.15); color: var(--primary); border: 1px solid rgba(16, 185, 129, 0.3);">
+                      <span>📅</span> Google Cal
+                    </a>
+                    <button type="button" class="btn-cal-action btn-download-single-ics" data-id="${b.id}" style="background: #202534; color: #fff; border: 1px solid var(--border-card);">
+                      <span>📥</span> .ICS
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <button type="button" id="btn-download-all-ics" class="btn-primary-neon" style="margin-top: 16px; font-size: 0.82rem;">
+            <span>📅</span> Sincronizar todos con Calendario (.ics)
+          </button>
+        </div>
+      `;
+
+      // Eventos para descargar .ics individual
+      body.querySelectorAll('.btn-download-single-ics').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const bill = pendingBills.find(b => b.id === id);
+          if (bill) this.downloadICS(bill);
+        });
+      });
+
+      // Evento para descargar todos
+      const btnAll = document.getElementById('btn-download-all-ics');
+      if (btnAll) {
+        btnAll.addEventListener('click', () => {
+          this.downloadAllICS(pendingBills);
+        });
+      }
     }
 
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        new Notification('Supervivencia Estudiantil 🎓', {
-          body: 'Alertas de pagos y vencimientos configuradas con éxito.',
-          icon: './icons/icon-192.png'
-        });
-      } else {
-        console.warn("Permiso de notificaciones denegado.");
-      }
-    } catch (err) {
-      console.warn("Error al solicitar notificaciones:", err);
-    }
+    modal.classList.add('open');
   }
 
   attachEvents() {
@@ -216,11 +410,20 @@ class BillsManager {
       });
     }
 
-    // Botón de activar notificaciones 24h
+    // Modal: Recordatorios
     const btnNotify = document.getElementById('btn-enable-bill-notifications');
+    const modalReminders = document.getElementById('modal-bill-reminders');
+    const btnCloseReminders = document.getElementById('btn-close-reminders-modal');
+
     if (btnNotify) {
       btnNotify.addEventListener('click', () => {
-        this.requestNotificationPermission();
+        this.openRemindersModal();
+      });
+    }
+
+    if (btnCloseReminders && modalReminders) {
+      btnCloseReminders.addEventListener('click', () => {
+        modalReminders.classList.remove('open');
       });
     }
   }

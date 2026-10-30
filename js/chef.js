@@ -220,8 +220,8 @@ class ChefForaneo {
         }
       };
 
-      const primaryUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${GEMINI_API_KEY}`;
-      const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      const primaryUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
       let response;
       try {
@@ -233,6 +233,7 @@ class ChefForaneo {
         });
 
         if (!response.ok && response.status === 404) {
+          console.warn('[Visión IA] 404 en endpoint primario, reintentando con gemini-flash-latest...');
           response = await fetch(fallbackUrl, {
             method: 'POST',
             mode: 'cors',
