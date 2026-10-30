@@ -124,8 +124,8 @@ class ChefForaneo {
       return;
     }
 
-    // Redimensionar respetando aspecto (máx. 1024px para compresión ultrarrápida en móviles)
-    const maxDimension = 1024;
+    // Redimensionar respetando aspecto (máx. 640px para compresión ultrarrápida en móviles)
+    const maxDimension = 640;
     let width = video.videoWidth;
     let height = video.videoHeight;
 
@@ -144,8 +144,8 @@ class ChefForaneo {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, width, height);
 
-    // Obtener Base64 JPEG comprimido (calidad 0.8)
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    // Obtener Base64 JPEG comprimido (calidad 0.6 para transmisión casi instantánea < 50KB)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
     const base64Data = dataUrl.split(',')[1];
 
     if (base64Data) {
@@ -161,7 +161,7 @@ class ChefForaneo {
       const img = new Image();
       img.onload = () => {
         const canvas = document.getElementById('scanner-canvas') || document.createElement('canvas');
-        const maxDimension = 1024;
+        const maxDimension = 640;
         let width = img.width;
         let height = img.height;
 
@@ -180,7 +180,7 @@ class ChefForaneo {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
         const base64Data = dataUrl.split(',')[1];
         if (base64Data) {
           this.analyzeFridgeImageWithAI(base64Data);
@@ -191,15 +191,13 @@ class ChefForaneo {
     reader.readAsDataURL(file);
   }
 
-  // Llamada a la API de Visión Multimodal de Gemini
+  // Llamada a la API de Visión Multimodal de Gemini (Ultra rápida con 1.5-flash-8b)
   async analyzeFridgeImageWithAI(base64JpegData) {
     const processingOverlay = document.getElementById('scanner-processing-overlay');
     if (processingOverlay) processingOverlay.style.display = 'flex';
 
     try {
-      const promptText = `
-Analiza esta imagen de una nevera/alacena e identifica todos los ingredientes y alimentos visibles que puedan servir para cocinar. Devuelve únicamente un arreglo JSON de strings con los nombres de los ingredientes en español, sin preámbulos ni markdown: ["huevos", "tomate", "cebolla", "leche", ...]. Sé preciso, solo incluye lo que realmente se observe con alta probabilidad.
-      `.trim();
+      const promptText = 'Devuelve únicamente un arreglo JSON plano con los nombres de alimentos visibles en español. Ejemplo: ["huevo","leche","arroz"]. No agregues explicaciones.';
 
       const requestPayload = {
         contents: [
@@ -216,14 +214,14 @@ Analiza esta imagen de una nevera/alacena e identifica todos los ingredientes y 
           }
         ],
         generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 600,
+          temperature: 0.0,
+          maxOutputTokens: 150,
           responseMimeType: "application/json"
         }
       };
 
-      const primaryUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-      const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+      const primaryUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${GEMINI_API_KEY}`;
+      const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
       let response;
       try {
