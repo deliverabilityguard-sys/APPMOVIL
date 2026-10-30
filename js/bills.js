@@ -166,19 +166,22 @@ class BillsManager {
 
   async requestNotificationPermission() {
     if (!('Notification' in window)) {
-      alert('Tu navegador móvil no soporta notificaciones push locales.');
+      console.warn("Notificaciones web no disponibles en este entorno.");
       return;
     }
 
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      alert('🔔 ¡Notificaciones activadas! Te avisaremos 24 horas antes del vencimiento de tus pagos.');
-      new Notification('Supervivencia Estudiantil 🎓', {
-        body: 'Alertas de pagos y vencimientos configuradas con éxito.',
-        icon: './icons/icon-192.png'
-      });
-    } else {
-      alert('Permiso de notificaciones denegado. Puedes activarlo en los ajustes de tu navegador.');
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        new Notification('Supervivencia Estudiantil 🎓', {
+          body: 'Alertas de pagos y vencimientos configuradas con éxito.',
+          icon: './icons/icon-192.png'
+        });
+      } else {
+        console.warn("Permiso de notificaciones denegado.");
+      }
+    } catch (err) {
+      console.warn("Error al solicitar notificaciones:", err);
     }
   }
 
